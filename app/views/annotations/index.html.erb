@@ -1,0 +1,37 @@
+<h1>Listing annotations</h1>
+
+<table class="table table-striped">
+  <tr>
+    <th>User ID</th>
+    <th>Annotation ID</th>
+    <th>Selected text</th>
+    <th>Translation</th>
+    <th>Language</th>
+    <th>Paragraph idx</th>
+    <th>Text idx</th>
+    <th>Url</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @annotations.each do |annotation| %>
+  <tr>
+    <td><%= annotation.user_id %></td>
+    <td><%= annotation.ann_id %></td>
+    <td><%= annotation.selected_text %></td>
+    <td><%= annotation.translation %></td>
+    <td><%= annotation.lang %></td>
+    <td><%= annotation.paragraph_idx %></td>
+    <td><%= annotation.text_idx %></td>
+    <td><%= annotation.url %></td>
+    <td><%= link_to 'Show', annotation %></td>
+    <td><%= link_to 'Edit', edit_annotation_path(annotation) %></td>
+    <td><%= link_to 'Destroy', annotation, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Annotation', new_annotation_path %>

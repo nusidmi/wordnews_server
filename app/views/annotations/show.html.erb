@@ -1,0 +1,45 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>User ID:</b>
+  <%= @annotation.user_id %>
+</p>
+
+<p>
+  <b>Annotatio ID:</b>
+  <%= @annotation.ann_id %>
+</p>
+
+<p>
+  <b>Selected text:</b>
+  <%= @annotation.selected_text %>
+</p>
+
+<p>
+  <b>Translation:</b>
+  <%= @annotation.translation %>
+</p>
+
+<p>
+  <b>Language:</b>
+  <%= @annotation.lang %>
+</p>
+
+<p>
+  <b>Paragraph idx:</b>
+  <%= @annotation.paragraph_idx %>
+</p>
+
+<p>
+  <b>Text idx:</b>
+  <%= @annotation.text_idx %>
+</p>
+
+<p>
+  <b>Url:</b>
+  <%= @annotation.url %>
+</p>
+
+
+<%= link_to 'Edit', edit_annotation_path(@annotation) %> |
+<%= link_to 'Back', annotations_path %>

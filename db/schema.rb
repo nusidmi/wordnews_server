@@ -11,7 +11,20 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20150607104945) do
+ActiveRecord::Schema.define(:version => 20160715082934) do
+
+  create_table "annotations", :force => true do |t|
+    t.integer  "user_id"
+    t.integer  "ann_id"
+    t.string   "selected_text"
+    t.string   "translation"
+    t.string   "lang"
+    t.integer  "paragraph_idx"
+    t.integer  "text_idx"
+    t.string   "url"
+    t.datetime "created_at",    :null => false
+    t.datetime "updated_at",    :null => false
+  end
 
   create_table "categories", :force => true do |t|
     t.string   "name"
