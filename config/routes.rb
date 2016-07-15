@@ -1,4 +1,6 @@
 TranslateApp::Application.routes.draw do
+  resources :annotations
+
   get 'hardcode/new'
   post 'hardcode/add'
   get 'hardcode/view'
