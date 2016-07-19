@@ -41,6 +41,16 @@ class AnnotationsController < ApplicationController
   # POST /annotations.json
   def create
     @annotation = Annotation.new(params[:annotation])
+    # @annotation = Annotation.new()
+    # @annotation.ann_id = params[:ann_id]
+    # @annotation.user_id = params[:user_id]
+    # @annotation.selected_text = params[:selected_text]
+    # @annotation.translation = params[:translation]
+    # @annotation.lang = params[:lang]
+    # @annotation.url = params[:url]
+    # @annotation.paragraph_idx = params[:paragraph_idx]
+    # @annotation.text_idx = params[:text_idx]
+    
 
     respond_to do |format|
       if @annotation.save
@@ -82,4 +92,14 @@ class AnnotationsController < ApplicationController
       format.json { head :no_content }
     end
   end
+  
+  
+  
+  
 end
+
+
+
+
+
+

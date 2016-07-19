@@ -1,5 +1,4 @@
 TranslateApp::Application.routes.draw do
-  resources :annotations
 
   get 'hardcode/new'
   post 'hardcode/add'
@@ -10,8 +9,10 @@ TranslateApp::Application.routes.draw do
   get 'hardcode/viewquiz'
   get 'hardcode/deletequiz'
 
+  # TODO: comment these three in production mode
   resources :users
   resources :dictionaries
+  resources :annotations
 
   match '/show_by_dictionary', to: 'translates#replacements_by_dictionary', via: :post
   match '/show', to: 'translates#replacements_by_bing', via: :post
@@ -27,7 +28,12 @@ TranslateApp::Application.routes.draw do
   match '/log', to: 'users#log', via: :post
   # TODO change this url
   match '/validate_google_id_token', to: 'users#validate_google_id_token', via: [:get, :post]
-
+  
+  
+  match '/create_annotation', to: 'annotations#create', via: [:get, :post]
+  match '/delete_annotation', to: 'annotations#destroy', via: :get
+  match '/update_annotation', to: 'annotations#update', via: :post
+  
 
   # The priority is based upon order of creation:
   # first created -> highest priority.
