@@ -1,4 +1,7 @@
+#require 'message_code.rb'
+
 class AnnotationsController < ApplicationController
+  
   # GET /annotations
   # GET /annotations.json
   def index
@@ -20,6 +23,57 @@ class AnnotationsController < ApplicationController
       format.json { render json: @annotation }
     end
   end
+  
+  
+  def show_by_user_url
+    if params[:user_id].present? and params[:url].present?
+      @annotations = Annotation.where('user_id=? AND url=?', params[:user_id], params[:url])
+      respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_OK, annotations: @annotations}, 
+                      status: :ok}
+      end
+    else
+      respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request}
+      end
+    end
+  end
+  
+  def show_by_url
+    if params[:url].present?
+      @annotations = Annotation.where('url=?', params[:url])
+      respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_OK, annotations: @annotations}, 
+                      status: :ok}
+      end
+    else
+      respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request}
+      end
+    end
+  end
+  
+  # TODO: Move to users_controller.rb?
+  def show_user_annotation_history
+    if params[:user_id].present?
+      sql = 'user_id=' + params[:user_id]
+      total_annotation = Annotation.count('id', :conditions=>sql)
+      total_url = Annotation.count('url', :conditions=>sql, distinct: true)
+      respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_OK, 
+                      history: {annotation: total_annotation, url: total_url}},
+                      status: :ok}
+      end
+    else
+      respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request}
+      end
+    end
+  end
+
 
   # GET /annotations/new
   # GET /annotations/new.json
@@ -40,30 +94,36 @@ class AnnotationsController < ApplicationController
   # POST /annotations
   # POST /annotations.json
   def create
-    @annotation = Annotation.new(params[:annotation])
-    # @annotation = Annotation.new()
-    # @annotation.ann_id = params[:ann_id]
-    # @annotation.user_id = params[:user_id]
-    # @annotation.selected_text = params[:selected_text]
-    # @annotation.translation = params[:translation]
-    # @annotation.lang = params[:lang]
-    # @annotation.url = params[:url]
-    # @annotation.paragraph_idx = params[:paragraph_idx]
-    # @annotation.text_idx = params[:text_idx]
     
-
-    respond_to do |format|
-      if @annotation.save
-        format.html { redirect_to @annotation, notice: 'Annotation was successfully created.' }
-        format.json { render json: @annotation, status: :created, location: @annotation }
-      else
-        format.html { render action: "new" }
-        format.json { render json: @annotation.errors, status: :unprocessable_entity }
+    # TODO: a better validation strategy (use strong parameter?)
+    if (params[:annotation].present? and params[:annotation][:ann_id].present? \
+        and params[:annotation][:user_id].present? \
+        and params[:annotation][:selected_text].present? \
+        and params[:annotation][:translation].present? \
+        and params[:annotation][:lang].present?\
+        and params[:annotation][:url].present? \
+        and params[:annotation][:paragraph_idx].present?\
+        and params[:annotation][:text_idx].present?) 
+      @annotation = Annotation.new(params[:annotation])
+      
+      respond_to do |format|
+        if @annotation.save
+          format.html { redirect_to @annotation, notice: 'Annotation was successfully created.' }
+          format.json { render json: {msg: Utilities::Message::MSG_OK, id: @annotation.id},
+                        status: :ok }
+        else
+          format.html { render action: "new" }
+          format.json { render json: @annotation.errors, status: :bad_request }
+        end
+      end
+    else
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA }, 
+                      status: :bad_request } 
       end
     end
   end
 
-  # TODO: change id to ann_id?
   # PUT /annotations/1
   # PUT /annotations/1.json
   def update
@@ -79,22 +139,73 @@ class AnnotationsController < ApplicationController
       end
     end
   end
+  
+  
+  def update_translation
+    if !params[:id].present? or !params[:translation].present?
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA }, 
+                      status: :bad_request } 
+      end
+      return
+    end
+    
+    @annotation = Annotation.find_by_id(params[:id])
+    if @annotation
+      if @annotation.update_attribute(:translation, params[:translation])
+        respond_to do |format|
+          format.json { render json:{ msg: Utilities::Message::MSG_OK}, 
+                        status: :ok}
+        end
+      else
+        respond_to do |format|
+          format.json { render json:{ msg: Utilities::Message::MSG_UPDATE_FAIL}, 
+                        status: :ok} 
+        end
+      end
+    else
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_NOT_FOUND}, 
+                      status: :ok }
+      end
+    end
+  end
+    
+    
 
-  # TODO: change id to ann_id?
   # DELETE /annotations/1
   # DELETE /annotations/1.json
   def destroy
-    @annotation = Annotation.find(params[:id])
-    @annotation.destroy
-
-    respond_to do |format|
-      format.html { redirect_to annotations_url }
-      format.json { head :no_content }
+    if !params[:id].present?
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                        status: :bad_request }
+      end
+      return
+    end
+      
+    @annotation = Annotation.find_by_id(params[:id])
+    if @annotation
+      @annotation.destroy
+  
+      respond_to do |format|
+        format.html { redirect_to annotations_url }
+        format.json { render json: { msg: Utilities::Message::MSG_OK },
+                      status: :ok}
+      end
+    else
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_NOT_FOUND}, 
+                      status: :ok }
+      end
     end
   end
   
-  
-  
+
+  #private
+    #def validate_annotation
+      #params.require[:annotation].permits(:)
+    #end
   
 end
 
