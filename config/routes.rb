@@ -30,9 +30,12 @@ TranslateApp::Application.routes.draw do
   match '/validate_google_id_token', to: 'users#validate_google_id_token', via: [:get, :post]
   
   
-  match '/create_annotation', to: 'annotations#create', via: [:get, :post]
+  match '/create_annotation', to: 'annotations#create', via: [:get,:post]
   match '/delete_annotation', to: 'annotations#destroy', via: :get
-  match '/update_annotation', to: 'annotations#update', via: :post
+  match '/update_annotation', to: 'annotations#update_translation', via: :get
+  match '/show_annotation_by_user_url', to: 'annotations#show_by_user_url', via: :get
+  match '/show_annotation_by_url', to: 'annotations#show_by_url', via: :get
+  match '/show_user_annotation_history', to: 'annotations#show_user_annotation_history', via: :get
   
 
   # The priority is based upon order of creation:
