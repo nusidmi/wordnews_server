@@ -3,9 +3,8 @@
 require 'json'
 
 class TranslatesController < ApplicationController
-  include UserHandler
-  include Bing
-
+  #include UserHandler
+  #include Bing
 
   def replacements_by_dictionary
 
@@ -19,7 +18,7 @@ class TranslatesController < ApplicationController
 
     user = User.where(:user_name => @user_name).first
     if user.nil?
-      user = make_user @user_name
+      user = Utilities::UserHandler::make_user @user_name
     end
     user_id = user.id
     category_list = user.translate_categories.split(",")
@@ -120,7 +119,7 @@ class TranslatesController < ApplicationController
 
   def translate_paragraphs(user_id, num_words, paragraphs, prioritise_hardcode = false)
     results = []
-    chinese_sentences_with_alignments = Bing.translate(paragraphs, 'en', 'zh-CHS')
+    chinese_sentences_with_alignments = Utilities::Bing.translate(paragraphs, 'en', 'zh-CHS')
 
     paragraphs.zip(chinese_sentences_with_alignments).each do |paragraph, chinese_sentence_with_alignment|
       result = Hash.new
@@ -263,7 +262,7 @@ class TranslatesController < ApplicationController
 
     user = User.where(:user_name => user_name).first
     if user.nil?
-      user = make_user user_name
+      user = Utilities::UserHandler::make_user user_name
     end
     user_id = user.id
 
@@ -284,7 +283,7 @@ class TranslatesController < ApplicationController
 
     user = User.where(:user_name => user_name).first
     if user.nil?
-      user = make_user user_name
+      user = Utilities::UserHandler::make_user user_name
     end
     user_id = user.id
 

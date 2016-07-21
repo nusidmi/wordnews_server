@@ -1,5 +1,5 @@
 class UsersController < ApplicationController
-  include UserHandler
+  #include UserHandler
   
   # GET /users
   # GET /users.json
@@ -28,7 +28,7 @@ class UsersController < ApplicationController
     
     @user = User.where(:user_name => @user_name).first
     if @user.blank? #no user
-      make_user @user_name
+      Utilities::UserHandler::make_user @user_name
       @user = User.where(:user_name => @user_name).first
     end
     
@@ -54,7 +54,7 @@ class UsersController < ApplicationController
     @user_name = params[:name]
     @user = User.where(:user_name => @user_name).first
     if @user.blank? #no user
-      make_user @user_name
+      Utilities::UserHandler::make_user @user_name
       @user = User.where(:user_name => @user_name).first
     end
 
@@ -171,7 +171,7 @@ class UsersController < ApplicationController
 
   def validate_google_id_token
     
-    email = email_if_google_id_valid(params[:id_token])
+    email = Utilities::UserHandler::email_if_google_id_valid(params[:id_token])
     if email.blank?
       logger.info('No valid identity token present')
       render status: 401, nothing: true
