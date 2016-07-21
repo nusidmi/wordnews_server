@@ -37,6 +37,8 @@ TranslateApp::Application.routes.draw do
   match '/show_annotation_by_url', to: 'annotations#show_by_url', via: :get
   match '/show_user_annotation_history', to: 'annotations#show_user_annotation_history', via: :get
   
+  match '/get_user_id_by_user_name', to: 'users#get_id_by_username', via: :get
+  
 
   # The priority is based upon order of creation:
   # first created -> highest priority.

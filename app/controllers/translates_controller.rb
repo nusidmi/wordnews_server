@@ -3,7 +3,7 @@
 require 'json'
 
 class TranslatesController < ApplicationController
-include UserHandler
+  include UserHandler
   include Bing
 
 
@@ -437,7 +437,8 @@ include UserHandler
 
     respond_to do |format|
       format.html { render :layout => false } # new.html.erb
-      format.json { render json: @translate }
+      #format.json { render json: @translate } # TODO: why return translate???
+      format.json { render json: @number}
     end
   end
 

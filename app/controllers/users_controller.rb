@@ -183,6 +183,35 @@ class UsersController < ApplicationController
   end
 
 
+ 
+  # This is a temporal solution to obtain user id, and partially duplicate with /getNumber
+  # TODO: refine user account management
+  def get_id_by_username
+    if !params[:user_name].present?
+       respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA },
+                      status: :bad_request}
+      end
+      return
+    end
+    
+    @user_name = params[:user_name]
+    user = User.where(:user_name => @user_name).first
+    if user.blank? #no user
+      newUser = User.new
+      newUser.user_name = @user_name
+      newUser.if_translate = 1
+      newUser.translate_categories = '1,2,3,4' # the default will be translate all # TODO what does this do?
+      newUser.save
+      user = newUser
+    end
+    
+    respond_to do |format|
+      format.json { render json: {user_id: user.id, msg: Utilities::Message::MSG_OK },
+                    status: :ok}
+    end
+  end
+
 
 
 end

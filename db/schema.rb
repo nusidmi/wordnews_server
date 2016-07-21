@@ -27,7 +27,7 @@ ActiveRecord::Schema.define(:version => 20160720091306) do
   end
 
   add_index "annotations", ["url"], :name => "index_annotations_on_url"
-  add_index "annotations", ["user_id", "url"], :name => "index_annotations_on_user_id_and_url"
+  add_index "annotations", ["user_id", "url", "selected_text", "lang"], :name => "index_annotations_on_user_id_and_url_and_selected_text_and_lang"
 
   create_table "categories", :force => true do |t|
     t.string   "name"
