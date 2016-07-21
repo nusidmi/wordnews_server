@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160715082934) do
+ActiveRecord::Schema.define(:version => 20160720091306) do
 
   create_table "annotations", :force => true do |t|
     t.integer  "user_id"
@@ -25,6 +25,9 @@ ActiveRecord::Schema.define(:version => 20160715082934) do
     t.datetime "created_at",    :null => false
     t.datetime "updated_at",    :null => false
   end
+
+  add_index "annotations", ["url"], :name => "index_annotations_on_url"
+  add_index "annotations", ["user_id", "url"], :name => "index_annotations_on_user_id_and_url"
 
   create_table "categories", :force => true do |t|
     t.string   "name"
