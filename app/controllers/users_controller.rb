@@ -205,6 +205,7 @@ class UsersController < ApplicationController
       newUser.save
       user = newUser
     end
+    puts user.id
     
     respond_to do |format|
       format.json { render json: {user_id: user.id, msg: Utilities::Message::MSG_OK },
