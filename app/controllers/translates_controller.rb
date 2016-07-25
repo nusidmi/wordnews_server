@@ -457,5 +457,54 @@ class TranslatesController < ApplicationController
     aligned_positions
   end
 
+  def get_calculate
+
+    isNameValid = false
+    user_name = ''
+    user = nil
+
+    # If name is provided,
+    # 1. Test if userID is valid - 16 character, lowercase, hex
+    # 2. Check for user account
+
+    if params.has_key?(:name)
+      user_name = params[:name]
+      if UserHandler::validate_userID(user_name)
+        user = User.where(:user_name => user_name).first
+        if !user.blank?
+          # User is not found
+          isNameValid = true
+        end
+      end
+    end
+
+    result = Hash.new
+    result['userID'] = ""
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
+
+    result['learnt'] = 0
+    result['toLearn'] = 0
+
+    if isNameValid == false
+      user = UserHandler::create_new_user()
+      if user != nil
+        result['userID'] = user.user_name
+        result['msg'] =  Utilities::Message::MSG_OK
+      else
+        result['msg'] =  Utilities::Message::MSG_USER_CREATE_FAILURE
+      end
+    else
+      user_id = user.id
+      querylearnt = 'user_id=' + user_id.to_s+ ' and frequency > 0'
+      querytolearn = 'user_id=' + user_id.to_s+ ' and frequency = 0'
+
+      result['learnt'] = History.count('user_id', :conditions => [querylearnt])
+      result['toLearn'] = History.count('user_id', :conditions => [querytolearn])
+      result['userID'] = user.user_name
+      result['errorCode'] = 1
+    end
+
+    render json: result
+  end
 
 end
