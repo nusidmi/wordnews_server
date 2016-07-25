@@ -491,7 +491,7 @@ class TranslatesController < ApplicationController
         result['userID'] = user.user_name
         result['msg'] =  Utilities::Message::MSG_OK
       else
-        result['msg'] =  Utilities::Message::MSG_USER_CREATE_FAILURE
+        result['msg'] =  Utilities::Message::MSG_GET_CALCULATE_USER_CREATE_FAILURE
       end
     else
       user_id = user.id
@@ -501,7 +501,8 @@ class TranslatesController < ApplicationController
       result['learnt'] = History.count('user_id', :conditions => [querylearnt])
       result['toLearn'] = History.count('user_id', :conditions => [querytolearn])
       result['userID'] = user.user_name
-      result['errorCode'] = 1
+      #result['code'] = 1
+      result['msg'] =  Utilities::Message::MSG_OK
     end
 
     render json: result
