@@ -55,6 +55,23 @@ class AnnotationsController < ApplicationController
     end
   end
   
+  def show_count_by_url
+    if params[:url].present?
+      count = Annotation.count('id', :conditions=>['url=?', params[:url]])
+      respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_OK, 
+                      annotation_count: count},
+                      status: :ok}
+      end
+    else
+      respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request}
+      end
+    end
+  end
+  
+  
   # TODO: Move to users_controller.rb?
   def show_user_annotation_history
     if params[:user_id].present?
