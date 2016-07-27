@@ -61,8 +61,7 @@ class AnnotationsController < ApplicationController
       respond_to do |format|
         format.json { render json: {msg: Utilities::Message::MSG_OK, 
                       annotation_count: count},
-                      status: :ok}
-      end
+                      status: :ok}      end
     else
       respond_to do |format|
         format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
@@ -90,6 +89,44 @@ class AnnotationsController < ApplicationController
       end
     end
   end
+  
+  # All the annotations done by a user
+  def show_user_annotations
+    if params[:user_id].present?
+      @user = User.find(params[:user_id])
+      @annotations = Annotation.where('user_id=?', params[:user_id])
+      respond_to do |format|
+        format.html # show_user_annotations.html.erb
+        format.json { render json: {msg: Utilities::Message::MSG_OK, annotations: @annotations}, 
+                      status: :ok}
+      end
+    else
+      respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request}
+      end
+    end
+  end
+  
+  
+  # All the annotated urls done by a user
+  def show_user_url
+    if params[:user_id].present?
+      @user = User.find(params[:user_id])
+      @annotations = Annotation.where('user_id=?', params[:user_id])
+      respond_to do |format|
+        format.html # show_user_annotations.html.erb
+        format.json { render json: {msg: Utilities::Message::MSG_OK, annotations: @annotations}, 
+                      status: :ok}
+      end
+    else
+      respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request}
+      end
+    end
+  end
+  
 
 
   # GET /annotations/new
@@ -125,11 +162,11 @@ class AnnotationsController < ApplicationController
       
       respond_to do |format|
         if @annotation.save
-          format.html { redirect_to @annotation, notice: 'Annotation was successfully created.' }
+          #format.html { redirect_to @annotation, notice: 'Annotation was successfully created.' }
           format.json { render json: {msg: Utilities::Message::MSG_OK, id: @annotation.id},
                         status: :ok }
         else
-          format.html { render action: "new" }
+          #format.html { render action: "new" }
           format.json { render json: @annotation.errors, status: :bad_request }
         end
       end
@@ -148,10 +185,10 @@ class AnnotationsController < ApplicationController
 
     respond_to do |format|
       if @annotation.update_attributes(params[:annotation])
-        format.html { redirect_to @annotation, notice: 'Annotation was successfully updated.' }
+        #format.html { redirect_to @annotation, notice: 'Annotation was successfully updated.' }
         format.json { head :no_content }
       else
-        format.html { render action: "edit" }
+        #format.html { render action: "edit" }
         format.json { render json: @annotation.errors, status: :unprocessable_entity }
       end
     end
@@ -206,7 +243,7 @@ class AnnotationsController < ApplicationController
       @annotation.destroy
   
       respond_to do |format|
-        format.html { redirect_to annotations_url }
+        #format.html { redirect_to annotations_url }
         format.json { render json: { msg: Utilities::Message::MSG_OK },
                       status: :ok}
       end
