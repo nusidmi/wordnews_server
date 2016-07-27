@@ -1,9 +1,20 @@
 module Bing
 	# Specify all arguments
 	def Bing.translate(texts, from, to)
-		translator = BingTranslator.new(ENV["bingid"], ENV["bingkey"], false, ENV["bingaccount"])
+		if !ENV["bingid"].present? || !ENV["bingkey"].present? || !ENV["bingaccount"].present?
+			Rails.logger.warn "Bing_translator: Init failed. env missing"
+			return false
+		end
 
+		begin
+		translator = BingTranslator.new(ENV["bingid"], ENV["bingkey"], false, ENV["bingaccount"])
 		chinese = translator.translate_array2 texts, :from => from, :to => to #'zh-CHS'
+
+		rescue BingTranslator::AuthenticationException
+				Rails.logger.warn "Bing_translator: Authentication Error"
+				return false
+		end
+
 		return chinese
 	end
 
