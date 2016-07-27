@@ -572,7 +572,7 @@ class TranslatesController < ApplicationController
     render json: ret_translate
   end
 
-  def replacements_by_dictionary
+  def get_replacements_by_dictionary
 
     @result = Hash.new
     word_list = params[:text].split(" ")
