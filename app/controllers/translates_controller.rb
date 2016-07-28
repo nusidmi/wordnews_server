@@ -124,7 +124,7 @@ class TranslatesController < ApplicationController
     if chinese_sentences_with_alignments == false
       return []
     end
-    print chinese_sentences_with_alignments
+
     paragraphs.zip(chinese_sentences_with_alignments).each do |paragraph, chinese_sentence_with_alignment|
       result = Hash.new
       chinese_sentence = chinese_sentence_with_alignment[0]
@@ -461,7 +461,7 @@ class TranslatesController < ApplicationController
     aligned_positions
   end
 
-  def get_calculate
+  def do_calculate
 
     isNameValid = false
     user_name = ''
@@ -512,7 +512,7 @@ class TranslatesController < ApplicationController
     render json: result
   end
 
-  def get_replacements_by_bing
+  def do_replacements_by_bing
     # Validate username and url
 
     result = Hash.new
@@ -528,29 +528,19 @@ class TranslatesController < ApplicationController
     end
 
     # Validating URL
-    if !params[:url].present?
-      Rails.logger.debug "Validate_url; url is empty string"
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
-    end
-
-    begin
-      !!URI.parse(url)
-    rescue URI::InvalidURIError
-      Rails.logger.debug "Validate_url; URI::InvalidURIError"
+    if !ValidationHandler.validate_url(params[:url])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
       return render json: result
     end
 
     # Validate text
-    if !params[:text].present?
-      Rails.logger.debug "get_replacements_by_bing; Text missing"
+    if !ValidationHandler.validate_input_text(params[:text])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
       return render json: result
     end
 
-    num_words = params[:num_words] || 2
-    num_words = num_words.to_i
+    # Validate num_words include limit check
+    num_words = ValidationHandler.validate_input_num_words(params[:num_words])
 
     user = User.where(:user_name => user_name).first
     if user.nil?
@@ -561,48 +551,38 @@ class TranslatesController < ApplicationController
     user_id = user.id
 
     ret_translate = translate_paragraphs(user_id, num_words, [params[:text]])
+
     if ret_translate.empty? || ret_translate[0].empty?
       result['msg'] = Utilities::Message::MSG_SHOW_TRANSLATION_ERROR
       return render json: result
     end
 
-    ret_translate = ret_translate[0]
-    ret_translate['msg'] = Utilities::Message::MSG_OK
+    result['translate_text'] = ret_translate[0]
+    result['msg'] = Utilities::Message::MSG_OK
 
-    render json: ret_translate
+    render json: result
   end
 
-  def get_replacements_by_dictionary
+  def dictionary_translation(user_id, num_words, paragraphs, prioritise_hardcode = false)
+    result = Hash.new
 
-    @result = Hash.new
-    word_list = params[:text].split(" ")
-    #chinese_sentence = Bing.translate(params[:text].to_s,"en","zh-CHS")
-    chinese_sentence = ''
-    @user_name = params[:name]
-    @url = params[:url].chomp '/'
-    @num_words = params[:num_words].to_i || 2
-
-    user = User.where(:user_name => @user_name).first
-    if user.nil?
-      user = Utilities::UserHandler::make_user @user_name
-    end
-    user_id = user.id
-    category_list = user.translate_categories.split(",")
-
+    word_list = paragraphs.split(' ')
+    #chinese_sentence = ''
     words_retrieved = 0
     for word in word_list
       word = word.gsub(/[^a-zA-Z]/, "")
-      if words_retrieved >= @num_words
+      if words_retrieved >= num_words
         break # no need to continue as @num_words is the number of words requested by the client
       end
 
       #this is to add downcase and singularize support
       original_english_word = word.downcase.singularize
+
       english_meaning_row = EnglishWords.joins(:meanings)
                                 .select('english_meaning, meanings.id, meanings.chinese_words_id, meanings.word_category_id')
                                 .where("english_meaning = ?", original_english_word)
 
-      english_meaning = nil
+      # english_meaning = nil
       if english_meaning_row.length == 0
         next
       elsif english_meaning_row.length == 1 #has one meaning
@@ -611,19 +591,19 @@ class TranslatesController < ApplicationController
         # multiple matching meanings
         english_meaning = english_meaning_row.first # take the first meaning by default, unless a sentence matches
 
-        english_meaning_row.length.times do |index|
-          # checks if the bing-translated chinese sentence contains the chinese word retrieved
-          if chinese_sentence.to_s.include? ChineseWords.find(english_meaning_row[index].chinese_words_id).chinese_meaning
-            english_meaning = english_meaning_row[index]
-            break
-          end
-        end
+        # Not used?
+        # english_meaning_row.length.times do |index|
+        #   # checks if the bing-translated chinese sentence contains the chinese word retrieved
+        #   if chinese_sentence.to_s.include? ChineseWords.find(english_meaning_row[index].chinese_words_id).chinese_meaning
+        #     english_meaning = english_meaning_row[index]
+        #     break
+        #   end
+        # end
       end
 
-      @result[word] = Hash.new
+      result[word] = Hash.new
 
       @original_word_id = english_meaning_row.first.id
-
 
       #if temp.chinese_words_id.nil?
       #  english_meaning = meanings[0]
@@ -635,12 +615,12 @@ class TranslatesController < ApplicationController
       @original_word_chinese_id = english_meaning.chinese_words_id
 
 
-      @result[word]['wordID'] = english_meaning.id # always pass meaningId to client
+      result[word]['wordID'] = english_meaning.id # always pass meaningId to client
       chinese_word = ChineseWords.find(english_meaning.chinese_words_id)
 
-      @result[word]['chinese'] = chinese_word.chinese_meaning
+      result[word]['chinese'] = chinese_word.chinese_meaning
 
-      @result[word]['pronunciation'] = chinese_word.pronunciation
+      result[word]['pronunciation'] = chinese_word.pronunciation
 
 
       # see if the user understands this word before
@@ -650,37 +630,85 @@ class TranslatesController < ApplicationController
 
 
       if testEntry.blank? or testEntry.frequency.to_i <= 3 #just translate the word
-        @result[word]['isTest'] = 0
+        result[word]['isTest'] = 0
 
       elsif testEntry.frequency.to_i > 3 and testEntry.frequency.to_i <= 6 # quiz
-        @result[word]['isTest'] = 1
-        @result[word]['choices'] = Hash.new
-        @result[word]['isChoicesProvided'] = true
+        result[word]['isTest'] = 1
+        result[word]['choices'] = Hash.new
+        result[word]['isChoicesProvided'] = true
 
         choices = Meaning.where(:word_category_id => english_meaning.word_category_id).where("english_words_id != ?", @original_word_id).random(3)
         choices.each_with_index { |val, idx|
-          @result[word]['choices'][idx.to_s] = EnglishWords.find(val.english_words_id).english_meaning
+          result[word]['choices'][idx.to_s] = EnglishWords.find(val.english_words_id).english_meaning
         }
 
 
       elsif testEntry.frequency.to_i > 6
-        @result[word]['isTest'] = 2
-        @result[word]['choices'] = Hash.new
-        @result[word]['isChoicesProvided'] = true
+        result[word]['isTest'] = 2
+        result[word]['choices'] = Hash.new
+        result[word]['isChoicesProvided'] = true
 
         choices = Meaning.where(:word_category_id => english_meaning.word_category_id).where("chinese_words_id != ?", @original_word_chinese_id).random(3)
         choices.each_with_index { |val, idx|
-          @result[word]['choices'][idx.to_s] = ChineseWords.find(val.chinese_words_id).chinese_meaning
+          result[word]['choices'][idx.to_s] = ChineseWords.find(val.chinese_words_id).chinese_meaning
         }
 
       end
 
     end # end of for word in word_list
 
-    respond_to do |format|
-      format.html { render json: @result }
-      format.json { render json: @result }
+    return result
+  end
+
+  def do_replacements_by_dictionary
+
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
+
+    user_name = params[:name]
+    url = params[:url] || ''
+    url = url.chomp '/'
+
+    # Validate userID
+    if !UserHandler.validate_userID( user_name )
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
     end
+
+    # Validating URL
+    if !ValidationHandler.validate_url(params[:url])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
+    end
+
+    # Validate text
+    if !ValidationHandler.validate_input_text(params[:text])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
+    end
+
+    # Validate num_words include limit check
+    num_words = ValidationHandler.validate_input_num_words(params[:num_words])
+
+    user = User.where(:user_name => user_name).first
+    if user.nil?
+      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
+      return render json: result
+    end
+
+    user_id = user.id
+
+    #category_list = user.translate_categories.split(",")
+    ret_translate = dictionary_translation(user_id, num_words, params[:text])
+
+    if ret_translate.empty?
+      result['msg'] = Utilities::Message::MSG_SHOW_TRANSLATION_ERROR
+      return render json: result
+    end
+    result['translate_text'] = ret_translate
+    result['msg'] = Utilities::Message::MSG_OK
+
+    render json: result
   end
 
 end

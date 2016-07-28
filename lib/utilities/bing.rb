@@ -7,12 +7,13 @@ module Bing
 		end
 
 		begin
-		translator = BingTranslator.new(ENV["bingid"], ENV["bingkey"], false, ENV["bingaccount"])
-		chinese = translator.translate_array2 texts, :from => from, :to => to #'zh-CHS'
+			translator = BingTranslator.new(ENV["bingid"], ENV["bingkey"], false, ENV["bingaccount"])
+			chinese = translator.translate_array2 texts, :from => from, :to => to #'zh-CHS'
 
 		rescue BingTranslator::AuthenticationException
-				Rails.logger.warn "Bing_translator: Authentication Error"
-				return false
+			Rails.logger.warn "Bing_translator: Authentication Error"
+			return false
+
 		end
 
 		return chinese
