@@ -108,15 +108,15 @@ class AnnotationsController < ApplicationController
     end
   end
   
-  
+  # TODO
   # All the annotated urls done by a user
-  def show_user_url
+  def show_user_urls
     if params[:user_id].present?
       @user = User.find(params[:user_id])
-      @annotations = Annotation.where('user_id=?', params[:user_id])
+      @urls = Annotation.where('user_id=?', params[:user_id]).uniq.pluck(:url)
       respond_to do |format|
         format.html # show_user_annotations.html.erb
-        format.json { render json: {msg: Utilities::Message::MSG_OK, annotations: @annotations}, 
+        format.json { render json: {msg: Utilities::Message::MSG_OK, urls: @urls}, 
                       status: :ok}
       end
     else
@@ -162,11 +162,11 @@ class AnnotationsController < ApplicationController
       
       respond_to do |format|
         if @annotation.save
-          #format.html { redirect_to @annotation, notice: 'Annotation was successfully created.' }
+          format.html { redirect_to @annotation, notice: 'Annotation was successfully created.' }
           format.json { render json: {msg: Utilities::Message::MSG_OK, id: @annotation.id},
                         status: :ok }
         else
-          #format.html { render action: "new" }
+          format.html { render action: "new" }
           format.json { render json: @annotation.errors, status: :bad_request }
         end
       end

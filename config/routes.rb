@@ -38,6 +38,7 @@ TranslateApp::Application.routes.draw do
   match '/show_annotation_count_by_url', to: 'annotations#show_count_by_url', via: :get
   match '/show_user_annotation_history', to: 'annotations#show_user_annotation_history', via: :get
   match '/show_user_annotations', to: 'annotations#show_user_annotations', via: :get
+  match '/show_user_annotation_urls', to: 'annotations#show_user_urls', via: :get
   
   match '/get_user_id_by_user_name', to: 'users#get_id_by_username', via: :get
   
