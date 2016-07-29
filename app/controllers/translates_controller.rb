@@ -862,4 +862,90 @@ class TranslatesController < ApplicationController
 
   end
 
+  def do_get_example_sentences
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
+
+    # Validating word
+    if !ValidationHandler.validate_input_word(params[:word])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
+    end
+
+    meaning_id = params[:wordID]
+
+    sentence_list = MeaningsExampleSentence.where(:meaning_id => meaning_id)
+
+    result = Hash.new
+    result['chineseSentence'] = Hash.new
+    result['englishSentence'] = Hash.new
+    sentence_list.each_with_index { |val, idx|
+      result['chineseSentence'][idx.to_s] = ExampleSentence.find(val.example_sentences_id).chinese_sentence
+      result['englishSentence'][idx.to_s] = ExampleSentence.find(val.example_sentences_id).english_sentence
+    }
+
+    return render json: result
+  end
+
+  # get /getQuiz
+  def do_quiz
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
+
+    # Validating word
+    if !ValidationHandler.validate_input_word(params[:word])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
+    end
+    word_under_test = params[:word]
+
+    # Validating category
+    if !ValidationHandler.validate_input_category(params[:category])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
+    end
+    category = params[:category]
+
+    # Validating level
+    if !ValidationHandler.validate_input_level(params[:level])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
+    end
+    level = params[:level]
+
+    begin
+      distractors_str = `python "public/MCQ Generation/MCQGenerator.py" #{category} #{level} #{word_under_test}`
+    rescue Exception => e
+      Rails.logger.warn "MCQGenerator.py: Error e.msg=>[" + e.message + "]"
+      result['msg'] = Utilities::Message::MSG_GET_QUIZ_ERROR_IN_GENERATION
+      return render json: result
+
+    end
+
+    distractors = distractors_str.split(',')
+    Rails.logger.debug "#{word_under_test} has  #{distractors.size} distractors"
+
+    quiz = Hash.new
+
+    quiz[word_under_test] = Hash.new
+    quiz[word_under_test]['isTest'] = 1 # TODO rename isTest to testType
+    quiz[word_under_test]['choices'] = Hash.new
+
+    distractors.each_with_index { |val, idx|
+      quiz[word_under_test]['choices'][idx.to_s] = val.strip
+    }
+
+    hard_coded_quiz = HardCodedQuiz.where(:url => @url, :word => word_under_test)  ## <<--- is url needed???
+    if hard_coded_quiz.length > 0
+
+      quiz[word_under_test]['choices']['0'] = hard_coded_word.first.option1
+      quiz[word_under_test]['choices']['1'] = hard_coded_word.first.option2
+      quiz[word_under_test]['choices']['2'] = hard_coded_word.first.option3
+    end
+
+    result['quiz'] = quiz
+    result['msg'] = Utilities::Message::MSG_OK
+
+    return render json: result
+  end
 end

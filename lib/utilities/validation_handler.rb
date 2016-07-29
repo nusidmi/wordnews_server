@@ -82,4 +82,35 @@ module ValidationHandler
     return true
   end
 
+  def ValidationHandler.validate_input_word(word)
+    # Validate input word
+    if !word.present?
+      Rails.logger.debug "validate_input_word; word missing"
+      return false
+    end
+    return true
+  end
+
+  def ValidationHandler.validate_input_category(category)
+    # Validate input category
+    if !category.present?
+      Rails.logger.debug "validate_input_category; category missing"
+      return false
+    end
+    return true
+  end
+
+  def ValidationHandler.validate_input_level(level)
+    # Validate input level
+    if !level.present?
+      Rails.logger.debug "validate_input_level; level missing"
+      return false
+    end
+    if !/\A\d+\z/.match(level)
+      Rails.logger.debug "validate_input_level; level is not positive integer"
+      return false
+    end
+    return true
+  end
+
 end

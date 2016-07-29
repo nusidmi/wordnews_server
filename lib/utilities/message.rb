@@ -15,4 +15,7 @@ module Utilities::Message
 
     # /remember
     MSG_REMEMBER_HISTORY_CREATE_ERROR           = 'Error in creating history'
+
+    # /getQuiz.json
+    MSG_GET_QUIZ_ERROR_IN_GENERATION            = 'Quiz generation error'
 end
