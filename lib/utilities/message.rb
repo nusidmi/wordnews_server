@@ -13,4 +13,6 @@ module Utilities::Message
     MSG_SHOW_USER_NOT_FOUND                     = 'User not found'
     MSG_SHOW_TRANSLATION_ERROR                  = 'Error in Translation'
 
+    # /remember
+    MSG_REMEMBER_HISTORY_CREATE_ERROR           = 'Error in creating history'
 end

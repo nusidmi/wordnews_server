@@ -122,13 +122,25 @@ class TranslatesController < ApplicationController
 
     chinese_sentences_with_alignments = Bing.translate(paragraphs, 'en', 'zh-CHS')
     if chinese_sentences_with_alignments == false
+      Rails.logger.debug "translate_paragraphs; Bing did not generate any translation result"
       return []
     end
+
+    #puts "Translated text from Bing >>>>" + chinese_sentences_with_alignments.to_s
 
     paragraphs.zip(chinese_sentences_with_alignments).each do |paragraph, chinese_sentence_with_alignment|
       result = Hash.new
       chinese_sentence = chinese_sentence_with_alignment[0]
       raw_alignment = chinese_sentence_with_alignment[1]
+
+      if chinese_sentence.nil?   # Check if chinese sentence is missing
+        Rails.logger.debug "translate_paragraphs; Chinese sentence missing"
+        next
+      end
+      if raw_alignment.nil?   # It is possible that raw alignment data is missing
+        Rails.logger.debug "translate_paragraphs; Raw alignment missing"
+        next
+      end
 
       if !paragraph.blank?
         alignment = parse_alignment_string(raw_alignment)
@@ -139,6 +151,7 @@ class TranslatesController < ApplicationController
         paragraph.split(' ').each do |orig_word|
           word = orig_word.gsub(/[^a-zA-Z]/, '')
           if words_retrieved >= num_words
+            #Rails.logger.debug "translate_paragraphs; No need to continue as num_words is the number of words requested by the client"
             break # no need to continue as num_words is the number of words requested by the client
           end
 
@@ -151,6 +164,7 @@ class TranslatesController < ApplicationController
           zh_word = ''
           if english_meaning.nil?
             # no such english word in our dictionary
+            #Rails.logger.debug "translate_paragraphs; No such english word in our dictionary"
             next
           else
             word_index = paragraph.index(orig_word, index_offset)
@@ -160,6 +174,7 @@ class TranslatesController < ApplicationController
             chinese_alignment_pos_start, pos_end = alignment[word_index]
 
             if pos_end.nil?
+              #Rails.logger.debug "translate_paragraphs; No end position"
               next
             end
             zh_word = chinese_sentence[chinese_alignment_pos_start.. pos_end]
@@ -168,6 +183,7 @@ class TranslatesController < ApplicationController
             actual_meaning = chinese_meaning(normalised_word, zh_word)
 
             if actual_meaning.nil?
+              #Rails.logger.debug "translate_paragraphs; No actual meaning"
               next
             end
 
@@ -184,7 +200,7 @@ class TranslatesController < ApplicationController
 
           result[word]['wordID'] = @original_word_id # pass id of meaning to the client
 
-          if testEntry.blank? or testEntry.frequency.to_i <= 3 #just translate the word
+          if testEntry.blank? or testEntry.frequency.to_i < QUIZ_FREQUENCY_COUNT_MIN #just translate the word
             if prioritise_hardcode
               # check if a hard-coded translation is specified for this word
               hard_coded_word = HardCodedWord.where(:url => @url, :word => normalised_word)
@@ -214,9 +230,9 @@ class TranslatesController < ApplicationController
 
             result[word]['isTest'] = 0
             result[word]['testType'] = 0
-            result[word]['position'] = word_index
+            result[word]['position'] = word_index  ## How come we only need to set the position in this testType and not others???
 
-          elsif testEntry.frequency.to_i.between?(4, 5)
+          elsif testEntry.frequency.to_i.between?(QUIZ_FREQUENCY_COUNT_MIN, QUIZ_FREQUENCY_COUNT_MAX)
             result[word]['isTest'] = 1
             result[word]['testType'] = 1
             result[word]['chinese'] = actual_meaning.chinese_meaning
@@ -553,13 +569,14 @@ class TranslatesController < ApplicationController
     ret_translate = translate_paragraphs(user_id, num_words, [params[:text]])
 
     if ret_translate.empty? || ret_translate[0].empty?
-      result['msg'] = Utilities::Message::MSG_SHOW_TRANSLATION_ERROR
-      return render json: result
+      Rails.logger.debug "do_replacements_by_bing; No translation found but we still return OK"
+      result['translate_text'] = []
+
+    else
+      result['translate_text'] = ret_translate[0]
     end
 
-    result['translate_text'] = ret_translate[0]
     result['msg'] = Utilities::Message::MSG_OK
-
     render json: result
   end
 
@@ -572,6 +589,7 @@ class TranslatesController < ApplicationController
     for word in word_list
       word = word.gsub(/[^a-zA-Z]/, "")
       if words_retrieved >= num_words
+        #Rails.logger.debug "dictionary_translation; No need to continue as num_words < words_retrieved"
         break # no need to continue as @num_words is the number of words requested by the client
       end
 
@@ -584,6 +602,7 @@ class TranslatesController < ApplicationController
 
       # english_meaning = nil
       if english_meaning_row.length == 0
+        #Rails.logger.debug "dictionary_translation; No english meaning found"
         next
       elsif english_meaning_row.length == 1 #has one meaning
         english_meaning = english_meaning_row.first
@@ -629,10 +648,10 @@ class TranslatesController < ApplicationController
                       .where("user_id = ? AND meaning_id = ?", user_id, english_meaning.id).first
 
 
-      if testEntry.blank? or testEntry.frequency.to_i <= 3 #just translate the word
+      if testEntry.blank? or testEntry.frequency.to_i < QUIZ_FREQUENCY_COUNT_MIN #just translate the word
         result[word]['isTest'] = 0
 
-      elsif testEntry.frequency.to_i > 3 and testEntry.frequency.to_i <= 6 # quiz
+      elsif testEntry.frequency.to_i.between?(QUIZ_FREQUENCY_COUNT_MIN, QUIZ_FREQUENCY_COUNT_MAX) # quiz
         result[word]['isTest'] = 1
         result[word]['choices'] = Hash.new
         result[word]['isChoicesProvided'] = true
@@ -643,7 +662,7 @@ class TranslatesController < ApplicationController
         }
 
 
-      elsif testEntry.frequency.to_i > 6
+      else
         result[word]['isTest'] = 2
         result[word]['choices'] = Hash.new
         result[word]['isChoicesProvided'] = true
@@ -702,13 +721,145 @@ class TranslatesController < ApplicationController
     ret_translate = dictionary_translation(user_id, num_words, params[:text])
 
     if ret_translate.empty?
-      result['msg'] = Utilities::Message::MSG_SHOW_TRANSLATION_ERROR
-      return render json: result
+      Rails.logger.debug "do_replacements_by_dictionary; No translation found but we still return OK"
     end
+
     result['translate_text'] = ret_translate
     result['msg'] = Utilities::Message::MSG_OK
 
     render json: result
+  end
+
+  def do_replacements_multiple_paragraphs_by_bing
+
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
+
+    user_name = params[:name]
+    url = params[:url] || ''
+    url = url.chomp '/'
+
+    # Validate userID
+    if !UserHandler.validate_userID( user_name )
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
+    end
+
+    # Validating URL
+    if !ValidationHandler.validate_url(params[:url])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
+    end
+
+    # Validate text
+    if !ValidationHandler.validate_input_text(params[:texts])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
+    end
+
+    # Validate num_words include limit check
+    num_words = ValidationHandler.validate_input_num_words(params[:num_words])
+
+    user = User.where(:user_name => user_name).first
+    if user.nil?
+      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
+      return render json: result
+    end
+
+    user_id = user.id
+
+    paragraphs = JSON.parse(params[:texts])
+
+    ret_translate = []
+    paragraphs.each_slice(5) { |slice|
+      ret_translate.push(*translate_paragraphs(user_id, num_words, slice))
+    }
+
+    result['translate_text'] = ret_translate
+    result['msg'] = Utilities::Message::MSG_OK
+
+    render json: result
+
+  end
+
+  def do_remember
+
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
+
+    user_name = params[:name]
+    url = params[:url] || ''
+    url = url.chomp '/'
+
+    # Validate userID
+    if !UserHandler.validate_userID( user_name )
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
+    end
+
+    # Validating URL
+    if !ValidationHandler.validate_url(params[:url])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
+    end
+
+    # Validating isRemember
+    if !ValidationHandler.validate_input_is_remember(params[:isRemembered])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
+    end
+
+    is_remember = params[:isRemembered].to_i
+
+    # Validating wordID
+    if !ValidationHandler.validate_input_wordID(params[:wordID])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result
+    end
+
+    meaning_id = params[:wordID]
+
+    user = User.where(:user_name => user_name).first
+    if user.nil?
+      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
+      return render json: result
+    end
+
+    user_id = user.id
+
+    testEntry = History.where(:meaning_id => meaning_id, :user_id => user_id).first
+    if not testEntry.blank? # the user has seen this word before, just change the if_understand field
+      if is_remember == 0
+        testEntry.frequency = 0
+      else
+        testEntry.frequency= testEntry.frequency+1
+      end
+      # puts 'frequency of word with id = '
+      # puts @user_id
+      # puts 'wordID'
+      # puts @meaning_id
+      # puts testEntry.frequency
+
+      testEntry.url = @url
+      testEntry.save
+    else # this is a new word the user has some operations on
+      begin
+        understand = History.new
+        understand.user_id = user_id
+        understand.meaning_id = meaning_id
+        understand.url = url
+        understand.frequency = is_remember
+        understand.save
+      rescue Exception => e
+        Rails.logger.warn "do_remember: Error in creating History e.msg=>[" + e.message + "]"
+        result['msg'] = Utilities::Message::MSG_REMEMBER_HISTORY_CREATE_ERROR
+        return render json: result
+      end
+    end
+
+    result['msg'] = Utilities::Message::MSG_OK
+    return render json: result
+
   end
 
 end

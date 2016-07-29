@@ -13,7 +13,9 @@ module Bing
 		rescue BingTranslator::AuthenticationException
 			Rails.logger.warn "Bing_translator: Authentication Error"
 			return false
-
+		rescue Exception => e
+			Rails.logger.warn "Bing_translator: Error e.msg=>[" + e.message + "]"
+			return false
 		end
 
 		return chinese
