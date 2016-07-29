@@ -73,8 +73,12 @@ class AnnotationsController < ApplicationController
   
   # TODO: Move to users_controller.rb?
   def show_user_annotation_history
-    if params[:user_id].present?
-      sql = 'user_id=' + params[:user_id]
+    if params[:user_id].present? 
+      if params[:lang].present?
+        sql = ['user_id=? and lang=?', params[:user_id], params[:lang]]
+      else
+        sql = ['user_id=?', params[:user_id]]
+      end
       total_annotation = Annotation.count('id', :conditions=>sql)
       total_url = Annotation.count('url', :conditions=>sql, distinct: true)
       respond_to do |format|
@@ -91,39 +95,67 @@ class AnnotationsController < ApplicationController
   end
   
   # All the annotations done by a user
-  def show_user_annotations
-    if params[:user_id].present?
-      @user = User.find(params[:user_id])
-      @annotations = Annotation.where('user_id=?', params[:user_id])
-      respond_to do |format|
-        format.html # show_user_annotations.html.erb
-        format.json { render json: {msg: Utilities::Message::MSG_OK, annotations: @annotations}, 
-                      status: :ok}
-      end
-    else
+  # TODO: 
+  def show_user_annotations    
+    if !params[:user_id].present?
       respond_to do |format|
         format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request}
       end
+      return
+    end
+    
+    # invalid ID
+    @user = User.find_by_id(params[:user_id])
+    if @user==nil
+      respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_NOT_FOUND}, 
+                      status: :bad_request}
+      end
+      return
+    end
+      
+    if params[:lang].present?
+      @annotations = Annotation.where('user_id=? and lang=?', params[:user_id], params[:lang])
+    else
+      @annotations = Annotation.where('user_id=? ', params[:user_id])
+    end
+    respond_to do |format|
+      format.html # show_user_annotations.html.erb
+      format.json { render json: {msg: Utilities::Message::MSG_OK, annotations: @annotations}, 
+                    status: :ok}
     end
   end
   
-  # TODO
+  
   # All the annotated urls done by a user
   def show_user_urls
-    if params[:user_id].present?
-      @user = User.find(params[:user_id])
-      @urls = Annotation.where('user_id=?', params[:user_id]).uniq.pluck(:url)
-      respond_to do |format|
-        format.html # show_user_annotations.html.erb
-        format.json { render json: {msg: Utilities::Message::MSG_OK, urls: @urls}, 
-                      status: :ok}
-      end
-    else
-      respond_to do |format|
+    if !params[:user_id].present?
+       respond_to do |format|
         format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request}
       end
+      return
+    end
+
+    @user = User.find_by_id(params[:user_id])
+    if @user==nil
+      respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_NOT_FOUND}, 
+                      status: :bad_request}
+      end
+      return
+    end
+    
+    if params[:lang].present?
+      @urls = Annotation.where('user_id=? and lang=?', params[:user_id], params[:lang]).uniq.pluck(:url)
+    else
+      @urls = Annotation.where('user_id=?', params[:user_id]).uniq.pluck(:url)
+    end
+    respond_to do |format|
+      format.html # show_user_annotations.html.erb
+      format.json { render json: {msg: Utilities::Message::MSG_OK, urls: @urls}, 
+                    status: :ok}
     end
   end
   
