@@ -32,7 +32,7 @@ class MCQGenerator(object):
                 return i[1]
 
     def get_similarity(self, category, word, tag, number):
-                """ Return the specified number of words with good similarity"""
+        """ Return the specified number of words with good similarity"""
         similar_list = []
         word1 = self.stemmer.stem(word, tag)
         word_list = self.super_dict[category][tag].keys()

@@ -867,7 +867,7 @@ class TranslatesController < ApplicationController
     result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
 
     # Validating word
-    if !ValidationHandler.validate_input_word(params[:word])
+    if !ValidationHandler.validate_input_wordID(params[:wordID])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
       return render json: result
     end
@@ -876,13 +876,14 @@ class TranslatesController < ApplicationController
 
     sentence_list = MeaningsExampleSentence.where(:meaning_id => meaning_id)
 
-    result = Hash.new
     result['chineseSentence'] = Hash.new
     result['englishSentence'] = Hash.new
     sentence_list.each_with_index { |val, idx|
       result['chineseSentence'][idx.to_s] = ExampleSentence.find(val.example_sentences_id).chinese_sentence
       result['englishSentence'][idx.to_s] = ExampleSentence.find(val.example_sentences_id).english_sentence
     }
+
+    result['msg'] = Utilities::Message::MSG_OK
 
     return render json: result
   end
