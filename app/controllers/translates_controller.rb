@@ -6,6 +6,20 @@ class TranslatesController < ApplicationController
   #include UserHandler
   #include Bing
 
+  
+  def select_learn_words(user, num_words, paras)
+    # 1. sentence segmentation
+    # 2. word tokenization
+    
+    
+    
+  end
+  
+    
+  # Issues: 
+  # 1. Word split is not accurate
+  # 2. Word selection strategy is not reasonable: always select the first few words
+  # 3. Do not keep the position of selected words in the sentence/paragraph  
   def replacements_by_dictionary
 
     @result = Hash.new
@@ -274,6 +288,8 @@ class TranslatesController < ApplicationController
     end
   end
 
+  # In addition to the issues of dict-based translations:
+  # Waste bandwidth as translate too many unrelevant sentences.
   def replacements_multiple_paragraphs_by_bing
     user_name = params[:name]
     url = params[:url] || ''
