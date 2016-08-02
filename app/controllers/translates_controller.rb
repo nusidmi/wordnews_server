@@ -499,7 +499,7 @@ class TranslatesController < ApplicationController
     end
 
     result = Hash.new
-    result['userID'] = ""
+    result['userID'] = -1
     result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
 
     result['learnt'] = 0
@@ -508,7 +508,7 @@ class TranslatesController < ApplicationController
     if isNameValid == false
       user = UserHandler.create_new_user()
       if !user.nil?
-        result['userID'] = user.user_name
+        result['userID'] = user.user_name.to_i
         result['msg'] =  Utilities::Message::MSG_OK
       else
         result['msg'] =  Utilities::Message::MSG_GET_CALCULATE_USER_CREATE_FAILURE
@@ -521,7 +521,7 @@ class TranslatesController < ApplicationController
 
       result['learnt'] = History.count('user_id', :conditions => [querylearnt])
       result['toLearn'] = History.count('user_id', :conditions => [querytolearn])
-      result['userID'] = user.user_name
+      result['userID'] = user.user_name.to_i
 
       result['msg'] =  Utilities::Message::MSG_OK
     end

@@ -244,14 +244,33 @@ class UsersController < ApplicationController
 
   # TODO think about deprecating this.
   def log
-    @user = User.where(:user_name => params[:id]).first
+
+    user_name = params[:name]
+    @user = nil
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
+
+    # Validate userID
+    if !UserHandler.validate_userID( user_name )
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    @user = User.where(:user_name => user_name).first
+    if @user.nil?
+      Rails.logger.warn "settings: User[" + user_name.to_s + "] not found"
+      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
+      return render json: result, status: :bad_request
+    end
+
     @time_elapsed = params[:time]
     @move = params[:move]
 
-    puts "Log: User " + @user.id.to_s + ":" + @time_elapsed.to_s + ":" + @move.to_s
-    respond_to do |format|
-      format.html { render :nothing => true, :status =>200 }
-    end
+    #puts "Log: User " + @user.id.to_s + ":" + @time_elapsed.to_s + ":" + @move.to_s
+    UserActionLogger.info( "Log: User[" + user_name + "], Elasped_t:" + @time_elapsed.to_s + ", Action:" + @move.to_s )
+
+    result['msg'] = Utilities::Message::MSG_OK
+    return render json: result
   end
 
   def validate_google_id_token
