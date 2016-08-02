@@ -507,11 +507,12 @@ class TranslatesController < ApplicationController
 
     if isNameValid == false
       user = UserHandler.create_new_user()
-      if user != nil
+      if !user.nil?
         result['userID'] = user.user_name
         result['msg'] =  Utilities::Message::MSG_OK
       else
         result['msg'] =  Utilities::Message::MSG_GET_CALCULATE_USER_CREATE_FAILURE
+        return render json: result, status: :internal_server_error
       end
     else
       user_id = user.id
@@ -521,7 +522,7 @@ class TranslatesController < ApplicationController
       result['learnt'] = History.count('user_id', :conditions => [querylearnt])
       result['toLearn'] = History.count('user_id', :conditions => [querytolearn])
       result['userID'] = user.user_name
-      #result['code'] = 1
+
       result['msg'] =  Utilities::Message::MSG_OK
     end
 
@@ -540,19 +541,19 @@ class TranslatesController < ApplicationController
 
     if !UserHandler.validate_userID( user_name )
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     # Validating URL
     if !ValidationHandler.validate_url(params[:url])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     # Validate text
     if !ValidationHandler.validate_input_text(params[:text])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     # Validate num_words include limit check
@@ -560,8 +561,9 @@ class TranslatesController < ApplicationController
 
     user = User.where(:user_name => user_name).first
     if user.nil?
+      Rails.logger.warn "do_replacements_by_bing: User[" + user_name.to_s + "] not found"
       result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     user_id = user.id
@@ -691,19 +693,19 @@ class TranslatesController < ApplicationController
     # Validate userID
     if !UserHandler.validate_userID( user_name )
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     # Validating URL
     if !ValidationHandler.validate_url(params[:url])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     # Validate text
     if !ValidationHandler.validate_input_text(params[:text])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     # Validate num_words include limit check
@@ -711,8 +713,9 @@ class TranslatesController < ApplicationController
 
     user = User.where(:user_name => user_name).first
     if user.nil?
+      Rails.logger.warn "do_replacements_by_dictionary: User[" + user_name.to_s + "] not found"
       result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     user_id = user.id
@@ -742,19 +745,19 @@ class TranslatesController < ApplicationController
     # Validate userID
     if !UserHandler.validate_userID( user_name )
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     # Validating URL
     if !ValidationHandler.validate_url(params[:url])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     # Validate text
     if !ValidationHandler.validate_input_text(params[:texts])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     # Validate num_words include limit check
@@ -762,8 +765,9 @@ class TranslatesController < ApplicationController
 
     user = User.where(:user_name => user_name).first
     if user.nil?
+      Rails.logger.warn "do_replacements_multiple_paragraphs_by_bing: User[" + user_name.to_s + "] not found"
       result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     user_id = user.id
@@ -794,19 +798,19 @@ class TranslatesController < ApplicationController
     # Validate userID
     if !UserHandler.validate_userID( user_name )
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     # Validating URL
     if !ValidationHandler.validate_url(params[:url])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     # Validating isRemember
     if !ValidationHandler.validate_input_is_remember(params[:isRemembered])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     is_remember = params[:isRemembered].to_i
@@ -814,15 +818,16 @@ class TranslatesController < ApplicationController
     # Validating wordID
     if !ValidationHandler.validate_input_wordID(params[:wordID])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     meaning_id = params[:wordID]
 
     user = User.where(:user_name => user_name).first
     if user.nil?
+      Rails.logger.warn "do_remember: User[" + user_name.to_s + "] not found"
       result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     user_id = user.id
@@ -853,7 +858,7 @@ class TranslatesController < ApplicationController
       rescue Exception => e
         Rails.logger.warn "do_remember: Error in creating History e.msg=>[" + e.message + "]"
         result['msg'] = Utilities::Message::MSG_REMEMBER_HISTORY_CREATE_ERROR
-        return render json: result
+        return render json: result, status: :internal_server_error
       end
     end
 
@@ -869,7 +874,7 @@ class TranslatesController < ApplicationController
     # Validating word
     if !ValidationHandler.validate_input_wordID(params[:wordID])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
 
     meaning_id = params[:wordID]
@@ -896,21 +901,21 @@ class TranslatesController < ApplicationController
     # Validating word
     if !ValidationHandler.validate_input_word(params[:word])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
     word_under_test = params[:word]
 
     # Validating category
     if !ValidationHandler.validate_input_category(params[:category])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
     category = params[:category]
 
     # Validating level
     if !ValidationHandler.validate_input_level(params[:level])
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result
+      return render json: result, status: :bad_request
     end
     level = params[:level]
 
@@ -919,8 +924,7 @@ class TranslatesController < ApplicationController
     rescue Exception => e
       Rails.logger.warn "MCQGenerator.py: Error e.msg=>[" + e.message + "]"
       result['msg'] = Utilities::Message::MSG_GET_QUIZ_ERROR_IN_GENERATION
-      return render json: result
-
+      return render json: result, status: :internal_server_error
     end
 
     distractors = distractors_str.split(',')

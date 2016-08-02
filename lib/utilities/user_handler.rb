@@ -1,4 +1,3 @@
-require 'securerandom'
 require 'uri'
 
 module UserHandler
@@ -42,8 +41,8 @@ module UserHandler
 
   end
 
-  def UserHandler.generate_userID(size=16)
-    SecureRandom.hex(size)
+  def UserHandler.generate_userID()
+    rand(USER_ID_CREATE_MIN..USER_ID_CREATE_MAX)
   end
 
   def UserHandler.validate_userID(userID)
@@ -51,12 +50,19 @@ module UserHandler
       Rails.logger.debug "validate_userID; ID is empty string"
       return false
     end
-    if userID =~ /^([0-9a-f]{16})+$/
-      #Rails.logger.info "validate_userID; Validated ID=[" + userID + "]"
-      return true
+    if !(userID =~ /^([0-9])+$/)
+      Rails.logger.debug "validate_userID; ID is not a number"
+      return false
     end
-    Rails.logger.debug "validate_userID; ID is not a 16 hex string"
-    return false
+
+    userID = userID.to_i
+    if !userID.between?(USER_ID_CREATE_MIN, USER_ID_CREATE_MAX)
+      Rails.logger.debug "validate_userID; ID is not in valid range"
+      return false
+    end
+
+    #Rails.logger.debug "validate_userID; ID[" + userID.to_s + "] is valid"
+    return true
   end
 
   def UserHandler.create_new_user()
@@ -79,10 +85,10 @@ module UserHandler
       end
       newUser = nil
       counter+=1
-    end while counter < 5
+    end while counter < MAX_USER_CREATE_RETRIES
 
     if newUser != nil
-      Rails.logger.info "create_new_user: New user created! [Name:" + newUser.user_name + "] Tries:{" + counter.to_s + "}"
+      Rails.logger.info "create_new_user: New user created! [Name:" + newUser.user_name.to_s + "] Tries:{" + counter.to_s + "}"
     else
       Rails.logger.warn "create_new_user: ERROR: cannot create new user after " + counter.to_s + " trys"
     end
