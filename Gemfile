@@ -21,7 +21,7 @@ end
 # randome database support in database (?)
 gem 'randumb'
 gem 'jquery-rails'
-gem "bing_translator", "~> 4.6.0"
+#gem "bing_translator", "~> 4.6.0"  # use lib/utilities/bing_translator.rb
 
 # beautify rails console database table view
 gem 'hirb', '~> 0.7.2'
@@ -42,6 +42,8 @@ gem 'rb-readline'
 gem 'test-unit'
 
 gem 'newrelic_rpm'
+
+gem "savon", "~> 2.10.0"
 
 # To use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'

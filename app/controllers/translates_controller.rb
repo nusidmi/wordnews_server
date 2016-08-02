@@ -8,113 +8,54 @@ class TranslatesController < ApplicationController
 
   def replacements_by_dictionary
 
-    @result = Hash.new
-    word_list = params[:text].split(" ")
-    #chinese_sentence = Bing.translate(params[:text].to_s,"en","zh-CHS")
-    chinese_sentence = ''
-    @user_name = params[:name]
-    @url = params[:url].chomp '/'
-    @num_words = params[:num_words].to_i || 2
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
 
-    user = User.where(:user_name => @user_name).first
+    user_name = params[:name]
+    url = params[:url] || ''
+    url = url.chomp '/'
+
+    # Validate userID
+    if !UserHandler.validate_userID( user_name )
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    # Validating URL
+    if !ValidationHandler.validate_url(params[:url])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    # Validate text
+    if !ValidationHandler.validate_input_text(params[:text])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    # Validate num_words include limit check
+    num_words = ValidationHandler.validate_input_num_words(params[:num_words])
+
+    user = User.where(:user_name => user_name).first
     if user.nil?
-      user = Utilities::UserHandler::make_user @user_name
+      Rails.logger.warn "do_replacements_by_dictionary: User[" + user_name.to_s + "] not found"
+      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
+      return render json: result, status: :bad_request
     end
+
     user_id = user.id
-    category_list = user.translate_categories.split(",")
 
-    words_retrieved = 0
-    for word in word_list
-      word = word.gsub(/[^a-zA-Z]/, "")
-      if words_retrieved >= @num_words
-        break # no need to continue as @num_words is the number of words requested by the client
-      end
+    #category_list = user.translate_categories.split(",")
+    ret_translate = dictionary_translation(user_id, num_words, params[:text])
 
-      #this is to add downcase and singularize support
-      original_english_word = word.downcase.singularize
-      english_meaning_row = EnglishWords.joins(:meanings)
-                                .select('english_meaning, meanings.id, meanings.chinese_words_id, meanings.word_category_id')
-                                .where("english_meaning = ?", original_english_word)
-
-      english_meaning = nil
-      if english_meaning_row.length == 0
-        next
-      elsif english_meaning_row.length == 1 #has one meaning
-        english_meaning = english_meaning_row.first
-      else
-        # multiple matching meanings
-        english_meaning = english_meaning_row.first # take the first meaning by default, unless a sentence matches
-
-        english_meaning_row.length.times do |index|
-          # checks if the bing-translated chinese sentence contains the chinese word retrieved
-          if chinese_sentence.to_s.include? ChineseWords.find(english_meaning_row[index].chinese_words_id).chinese_meaning
-            english_meaning = english_meaning_row[index]
-            break
-          end
-        end
-      end
-
-      @result[word] = Hash.new
-
-      @original_word_id = english_meaning_row.first.id
-
-
-      #if temp.chinese_words_id.nil?
-      #  english_meaning = meanings[0]
-      #end
-
-      # if this point is reached, then the word and related information is sent back
-      words_retrieved = words_retrieved + 1
-
-      @original_word_chinese_id = english_meaning.chinese_words_id
-
-
-      @result[word]['wordID'] = english_meaning.id # always pass meaningId to client
-      chinese_word = ChineseWords.find(english_meaning.chinese_words_id)
-      
-      @result[word]['chinese'] = chinese_word.chinese_meaning
-      
-      @result[word]['pronunciation'] = chinese_word.pronunciation
-
-
-      # see if the user understands this word before
-      testEntry = Meaning.joins(:histories)
-                      .select('meaning_id, frequency')
-                      .where("user_id = ? AND meaning_id = ?", user_id, english_meaning.id).first
-
-
-      if testEntry.blank? or testEntry.frequency.to_i <= 3 #just translate the word
-        @result[word]['isTest'] = 0
-
-      elsif testEntry.frequency.to_i > 3 and testEntry.frequency.to_i <= 6 # quiz 
-        @result[word]['isTest'] = 1
-        @result[word]['choices'] = Hash.new
-        @result[word]['isChoicesProvided'] = true
-
-        choices = Meaning.where(:word_category_id => english_meaning.word_category_id).where("english_words_id != ?", @original_word_id).random(3)
-        choices.each_with_index { |val, idx|
-          @result[word]['choices'][idx.to_s] = EnglishWords.find(val.english_words_id).english_meaning
-        }
-
-
-      elsif testEntry.frequency.to_i > 6
-        @result[word]['isTest'] = 2
-        @result[word]['choices'] = Hash.new
-        @result[word]['isChoicesProvided'] = true
-
-        choices = Meaning.where(:word_category_id => english_meaning.word_category_id).where("chinese_words_id != ?", @original_word_chinese_id).random(3)
-        choices.each_with_index { |val, idx|
-          @result[word]['choices'][idx.to_s] = ChineseWords.find(val.chinese_words_id).chinese_meaning
-        }
-      
-      end
-
-    end # end of for word in word_list
-
-    respond_to do |format|
-      format.html { render json: @result }
-      format.json { render json: @result }
+    if ret_translate.empty?
+      Rails.logger.debug "do_replacements_by_dictionary; No translation found but we still return OK"
     end
+
+    result['translate_text'] = ret_translate
+    result['msg'] = Utilities::Message::MSG_OK
+
+    render json: result
   end
 
   def translate_paragraphs(user_id, num_words, paragraphs, prioritise_hardcode = false)
@@ -274,50 +215,109 @@ class TranslatesController < ApplicationController
   end
 
   def replacements_by_bing
+    # Validate username and url
+
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
+
     user_name = params[:name]
     url = params[:url] || ''
     url = url.chomp '/'
-    num_words = params[:num_words] || 2
-    num_words = num_words.to_i
+
+    if !UserHandler.validate_userID( user_name )
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    # Validating URL
+    if !ValidationHandler.validate_url(params[:url])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    # Validate text
+    if !ValidationHandler.validate_input_text(params[:text])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    # Validate num_words include limit check
+    num_words = ValidationHandler.validate_input_num_words(params[:num_words])
 
     user = User.where(:user_name => user_name).first
     if user.nil?
-      user = Utilities::UserHandler::make_user user_name
+      Rails.logger.warn "do_replacements_by_bing: User[" + user_name.to_s + "] not found"
+      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
+      return render json: result, status: :bad_request
     end
+
     user_id = user.id
 
-    @result = translate_paragraphs(user_id, num_words, [params[:text]])[0]
+    ret_translate = translate_paragraphs(user_id, num_words, [params[:text]])
 
-    respond_to do |format|
-      format.html { render json: @result }
-      format.json { render json: @result }
+    if ret_translate.empty? || ret_translate[0].empty?
+      Rails.logger.debug "do_replacements_by_bing; No translation found but we still return OK"
+      result['translate_text'] = []
+
+    else
+      result['translate_text'] = ret_translate[0]
     end
+
+    result['msg'] = Utilities::Message::MSG_OK
+    render json: result
   end
 
   def replacements_multiple_paragraphs_by_bing
+
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
+
     user_name = params[:name]
     url = params[:url] || ''
     url = url.chomp '/'
-    num_words = params[:num_words] || 2
-    num_words = num_words.to_i
+
+    # Validate userID
+    if !UserHandler.validate_userID( user_name )
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    # Validating URL
+    if !ValidationHandler.validate_url(params[:url])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    # Validate text
+    if !ValidationHandler.validate_input_text(params[:texts])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    # Validate num_words include limit check
+    num_words = ValidationHandler.validate_input_num_words(params[:num_words])
 
     user = User.where(:user_name => user_name).first
     if user.nil?
-      user = Utilities::UserHandler::make_user user_name
+      Rails.logger.warn "do_replacements_multiple_paragraphs_by_bing: User[" + user_name.to_s + "] not found"
+      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
+      return render json: result, status: :bad_request
     end
+
     user_id = user.id
 
     paragraphs = JSON.parse(params[:texts])
 
-    result = []
+    ret_translate = []
     paragraphs.each_slice(5) { |slice|
-      result.push(*translate_paragraphs(user_id, num_words, slice))
+      ret_translate.push(*translate_paragraphs(user_id, num_words, slice))
     }
 
-    respond_to do |format|
-      format.html { render json: result }
-      format.json { render json: result }
-    end
+    result['translate_text'] = ret_translate
+    result['msg'] = Utilities::Message::MSG_OK
+
+    render json: result
+
   end
 
   def chinese_meaning(english, chinese)
@@ -339,145 +339,175 @@ class TranslatesController < ApplicationController
 
 
   def get_example_sentences
-    @meaning_id = params[:wordID]
-    sentence_list = MeaningsExampleSentence.where(:meaning_id => @meaning_id)
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
 
-    @result = Hash.new
-    @result['chineseSentence'] = Hash.new
-    @result['englishSentence'] = Hash.new
+    # Validating word
+    if !ValidationHandler.validate_input_wordID(params[:wordID])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    meaning_id = params[:wordID]
+
+    sentence_list = MeaningsExampleSentence.where(:meaning_id => meaning_id)
+
+    result['chineseSentence'] = Hash.new
+    result['englishSentence'] = Hash.new
     sentence_list.each_with_index { |val, idx|
-      @result['chineseSentence'][idx.to_s] = ExampleSentence.find(val.example_sentences_id).chinese_sentence
-      @result['englishSentence'][idx.to_s] = ExampleSentence.find(val.example_sentences_id).english_sentence
+      result['chineseSentence'][idx.to_s] = ExampleSentence.find(val.example_sentences_id).chinese_sentence
+      result['englishSentence'][idx.to_s] = ExampleSentence.find(val.example_sentences_id).english_sentence
     }
 
-    respond_to do |format|
-      format.html { render :layout => false } # new.html.erb
-      format.json { render json: @translate }
-    end
+    result['msg'] = Utilities::Message::MSG_OK
+
+    return render json: result
   end
 
   # get /getQuiz
   def quiz
-    @token = params[:word]
-    @category = params[:category]
-    @knowledge_level = params[:level]
-    @sentence = params[:sentence]
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
 
-    # use a doubly-nested structure for now, as so to support receiving multiple tokens in future
-    @result = Hash.new
-    @result[@token] = Hash.new
-    @result[@token]['isTest'] = 1 # TODO rename isTest to testType
-    @result[@token]['choices'] = Hash.new
+    # Validating word
+    if !ValidationHandler.validate_input_word(params[:word])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+    word_under_test = params[:word]
 
-    category = @category
-    level = @knowledge_level
-    word_under_test = @token
+    # Validating category
+    if !ValidationHandler.validate_input_category(params[:category])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+    category = params[:category]
 
-    distractors_str = `python "public/MCQ Generation/MCQGenerator.py" #{category} #{level} #{word_under_test}`
+    # Validating level
+    if !ValidationHandler.validate_input_level(params[:level])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+    level = params[:level]
+
+    begin
+      distractors_str = `python "public/MCQ Generation/MCQGenerator.py" #{category} #{level} #{word_under_test}`
+    rescue Exception => e
+      Rails.logger.warn "MCQGenerator.py: Error e.msg=>[" + e.message + "]"
+      result['msg'] = Utilities::Message::MSG_GET_QUIZ_ERROR_IN_GENERATION
+      return render json: result, status: :internal_server_error
+    end
+
     distractors = distractors_str.split(',')
+    Rails.logger.debug "#{word_under_test} has  #{distractors.size} distractors"
 
-    puts "#{word_under_test} has  #{distractors.size} distractors"
+    quiz = Hash.new
+
+    quiz[word_under_test] = Hash.new
+    quiz[word_under_test]['isTest'] = 1 # TODO rename isTest to testType
+    quiz[word_under_test]['choices'] = Hash.new
 
     distractors.each_with_index { |val, idx|
-      @result[word_under_test]['choices'][idx.to_s] = val.strip
+      quiz[word_under_test]['choices'][idx.to_s] = val.strip
     }
 
-    hard_coded_quiz = HardCodedQuiz.where(:url => @url, :word => @token)
+    hard_coded_quiz = HardCodedQuiz.where(:url => @url, :word => word_under_test)  ## <<--- is url needed???
     if hard_coded_quiz.length > 0
 
-      @result[word]['choices']['0'] = hard_coded_word.first.option1
-      @result[word]['choices']['1'] = hard_coded_word.first.option2
-      @result[word]['choices']['2'] = hard_coded_word.first.option3
+      quiz[word_under_test]['choices']['0'] = hard_coded_word.first.option1
+      quiz[word_under_test]['choices']['1'] = hard_coded_word.first.option2
+      quiz[word_under_test]['choices']['2'] = hard_coded_word.first.option3
     end
 
-    respond_to do |format|
-      format.json { render json: @result }
-    end
+    result['quiz'] = quiz
+    result['msg'] = Utilities::Message::MSG_OK
+
+    return render json: result
   end
 
 
   def remember
-    @user_name = params[:name]
-    @is_remember = params[:isRemembered].to_i
-    @url = params[:url]
-    @meaning_id = params[:wordID] || params[:wordId]
-    @user_id = User.where(:user_name => @user_name).first.id
-    testEntry = History.where(:meaning_id => @meaning_id, :user_id => @user_id).first
+
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
+
+    user_name = params[:name]
+    url = params[:url] || ''
+    url = url.chomp '/'
+
+    # Validate userID
+    if !UserHandler.validate_userID( user_name )
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    # Validating URL
+    if !ValidationHandler.validate_url(params[:url])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    # Validating isRemember
+    if !ValidationHandler.validate_input_is_remember(params[:isRemembered])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    is_remember = params[:isRemembered].to_i
+
+    # Validating wordID
+    if !ValidationHandler.validate_input_wordID(params[:wordID])
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+
+    meaning_id = params[:wordID]
+
+    user = User.where(:user_name => user_name).first
+    if user.nil?
+      Rails.logger.warn "do_remember: User[" + user_name.to_s + "] not found"
+      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
+      return render json: result, status: :bad_request
+    end
+
+    user_id = user.id
+
+    testEntry = History.where(:meaning_id => meaning_id, :user_id => user_id).first
     if not testEntry.blank? # the user has seen this word before, just change the if_understand field
-      if @is_remember == 0
+      if is_remember == 0
         testEntry.frequency = 0
       else
         testEntry.frequency= testEntry.frequency+1
       end
-      puts 'frequency of word with id = '
-      puts @user_id 
-      puts 'wordID'
-      puts @meaning_id
-      puts testEntry.frequency
+      # puts 'frequency of word with id = '
+      # puts @user_id
+      # puts 'wordID'
+      # puts @meaning_id
+      # puts testEntry.frequency
 
       testEntry.url = @url
       testEntry.save
     else # this is a new word the user has some operations on
-      understand = History.new
-      understand.user_id = @user_id
-      understand.meaning_id = @meaning_id
-      understand.url = @url
-      understand.frequency = @is_remember
-      understand.save
+      begin
+        understand = History.new
+        understand.user_id = user_id
+        understand.meaning_id = meaning_id
+        understand.url = url
+        understand.frequency = is_remember
+        understand.save
+      rescue Exception => e
+        Rails.logger.warn "do_remember: Error in creating History e.msg=>[" + e.message + "]"
+        result['msg'] = Utilities::Message::MSG_REMEMBER_HISTORY_CREATE_ERROR
+        return render json: result, status: :internal_server_error
+      end
     end
-    respond_to do |format|
-      format.html { render :layout => false } # new.html.erb
-      format.json { render json: @translate }
-    end
+
+    result['msg'] = Utilities::Message::MSG_OK
+    return render json: result
+
   end
 
   def calculate
-    @user_name = params[:name]
-    @number = Hash.new
-    user = User.where(:user_name => @user_name).first
-    if user.blank? #no user
-      newUser = User.new
-      newUser.user_name = @user_name
-      newUser.if_translate = 1
-      newUser.translate_categories = '1,2,3,4' # the default will be translate all # TODO what does this do?
-      newUser.save
-    end
-
-    if user.blank? #no user
-      @number['learnt'] = 0
-      @number['toLearn'] = 0
-    else
-      @user_id = user.id
-      @querylearnt = 'user_id=' + @user_id.to_s+ ' and frequency > 0'
-      @querytolearn = 'user_id=' + @user_id.to_s+ ' and frequency = 0'
-      @number['learnt'] = History.count('user_id', :conditions => [@querylearnt])
-      @number['toLearn'] = History.count('user_id', :conditions => [@querytolearn])
-    end
-
-    respond_to do |format|
-      format.html { render :layout => false } # new.html.erb
-      #format.json { render json: @translate } # TODO: why return translate???
-      format.json { render json: @number}
-    end
-  end
-
-
-  def parse_alignment_string(alignments)
-    aligned_positions = Hash.new
-    alignments.split(' ').each do |mapping|
-      lhs = mapping.split('-')[0]
-      start_of_lhs = lhs.split(':')[0]
-
-      rhs = mapping.split('-')[1]
-      start_of_rhs = rhs.split(':')[0]
-      end_of_rhs = rhs.split(':')[1]
-
-      aligned_positions[start_of_lhs.to_i] = [start_of_rhs.to_i, end_of_rhs.to_i]
-    end
-    aligned_positions
-  end
-
-  def do_calculate
 
     isNameValid = false
     user_name = ''
@@ -529,57 +559,20 @@ class TranslatesController < ApplicationController
     render json: result
   end
 
-  def do_replacements_by_bing
-    # Validate username and url
 
-    result = Hash.new
-    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
+  def parse_alignment_string(alignments)
+    aligned_positions = Hash.new
+    alignments.split(' ').each do |mapping|
+      lhs = mapping.split('-')[0]
+      start_of_lhs = lhs.split(':')[0]
 
-    user_name = params[:name]
-    url = params[:url] || ''
-    url = url.chomp '/'
+      rhs = mapping.split('-')[1]
+      start_of_rhs = rhs.split(':')[0]
+      end_of_rhs = rhs.split(':')[1]
 
-    if !UserHandler.validate_userID( user_name )
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
+      aligned_positions[start_of_lhs.to_i] = [start_of_rhs.to_i, end_of_rhs.to_i]
     end
-
-    # Validating URL
-    if !ValidationHandler.validate_url(params[:url])
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    # Validate text
-    if !ValidationHandler.validate_input_text(params[:text])
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    # Validate num_words include limit check
-    num_words = ValidationHandler.validate_input_num_words(params[:num_words])
-
-    user = User.where(:user_name => user_name).first
-    if user.nil?
-      Rails.logger.warn "do_replacements_by_bing: User[" + user_name.to_s + "] not found"
-      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
-      return render json: result, status: :bad_request
-    end
-
-    user_id = user.id
-
-    ret_translate = translate_paragraphs(user_id, num_words, [params[:text]])
-
-    if ret_translate.empty? || ret_translate[0].empty?
-      Rails.logger.debug "do_replacements_by_bing; No translation found but we still return OK"
-      result['translate_text'] = []
-
-    else
-      result['translate_text'] = ret_translate[0]
-    end
-
-    result['msg'] = Utilities::Message::MSG_OK
-    render json: result
+    aligned_positions
   end
 
   def dictionary_translation(user_id, num_words, paragraphs, prioritise_hardcode = false)
@@ -679,278 +672,5 @@ class TranslatesController < ApplicationController
     end # end of for word in word_list
 
     return result
-  end
-
-  def do_replacements_by_dictionary
-
-    result = Hash.new
-    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
-
-    user_name = params[:name]
-    url = params[:url] || ''
-    url = url.chomp '/'
-
-    # Validate userID
-    if !UserHandler.validate_userID( user_name )
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    # Validating URL
-    if !ValidationHandler.validate_url(params[:url])
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    # Validate text
-    if !ValidationHandler.validate_input_text(params[:text])
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    # Validate num_words include limit check
-    num_words = ValidationHandler.validate_input_num_words(params[:num_words])
-
-    user = User.where(:user_name => user_name).first
-    if user.nil?
-      Rails.logger.warn "do_replacements_by_dictionary: User[" + user_name.to_s + "] not found"
-      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
-      return render json: result, status: :bad_request
-    end
-
-    user_id = user.id
-
-    #category_list = user.translate_categories.split(",")
-    ret_translate = dictionary_translation(user_id, num_words, params[:text])
-
-    if ret_translate.empty?
-      Rails.logger.debug "do_replacements_by_dictionary; No translation found but we still return OK"
-    end
-
-    result['translate_text'] = ret_translate
-    result['msg'] = Utilities::Message::MSG_OK
-
-    render json: result
-  end
-
-  def do_replacements_multiple_paragraphs_by_bing
-
-    result = Hash.new
-    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
-
-    user_name = params[:name]
-    url = params[:url] || ''
-    url = url.chomp '/'
-
-    # Validate userID
-    if !UserHandler.validate_userID( user_name )
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    # Validating URL
-    if !ValidationHandler.validate_url(params[:url])
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    # Validate text
-    if !ValidationHandler.validate_input_text(params[:texts])
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    # Validate num_words include limit check
-    num_words = ValidationHandler.validate_input_num_words(params[:num_words])
-
-    user = User.where(:user_name => user_name).first
-    if user.nil?
-      Rails.logger.warn "do_replacements_multiple_paragraphs_by_bing: User[" + user_name.to_s + "] not found"
-      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
-      return render json: result, status: :bad_request
-    end
-
-    user_id = user.id
-
-    paragraphs = JSON.parse(params[:texts])
-
-    ret_translate = []
-    paragraphs.each_slice(5) { |slice|
-      ret_translate.push(*translate_paragraphs(user_id, num_words, slice))
-    }
-
-    result['translate_text'] = ret_translate
-    result['msg'] = Utilities::Message::MSG_OK
-
-    render json: result
-
-  end
-
-  def do_remember
-
-    result = Hash.new
-    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
-
-    user_name = params[:name]
-    url = params[:url] || ''
-    url = url.chomp '/'
-
-    # Validate userID
-    if !UserHandler.validate_userID( user_name )
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    # Validating URL
-    if !ValidationHandler.validate_url(params[:url])
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    # Validating isRemember
-    if !ValidationHandler.validate_input_is_remember(params[:isRemembered])
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    is_remember = params[:isRemembered].to_i
-
-    # Validating wordID
-    if !ValidationHandler.validate_input_wordID(params[:wordID])
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    meaning_id = params[:wordID]
-
-    user = User.where(:user_name => user_name).first
-    if user.nil?
-      Rails.logger.warn "do_remember: User[" + user_name.to_s + "] not found"
-      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
-      return render json: result, status: :bad_request
-    end
-
-    user_id = user.id
-
-    testEntry = History.where(:meaning_id => meaning_id, :user_id => user_id).first
-    if not testEntry.blank? # the user has seen this word before, just change the if_understand field
-      if is_remember == 0
-        testEntry.frequency = 0
-      else
-        testEntry.frequency= testEntry.frequency+1
-      end
-      # puts 'frequency of word with id = '
-      # puts @user_id
-      # puts 'wordID'
-      # puts @meaning_id
-      # puts testEntry.frequency
-
-      testEntry.url = @url
-      testEntry.save
-    else # this is a new word the user has some operations on
-      begin
-        understand = History.new
-        understand.user_id = user_id
-        understand.meaning_id = meaning_id
-        understand.url = url
-        understand.frequency = is_remember
-        understand.save
-      rescue Exception => e
-        Rails.logger.warn "do_remember: Error in creating History e.msg=>[" + e.message + "]"
-        result['msg'] = Utilities::Message::MSG_REMEMBER_HISTORY_CREATE_ERROR
-        return render json: result, status: :internal_server_error
-      end
-    end
-
-    result['msg'] = Utilities::Message::MSG_OK
-    return render json: result
-
-  end
-
-  def do_get_example_sentences
-    result = Hash.new
-    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
-
-    # Validating word
-    if !ValidationHandler.validate_input_wordID(params[:wordID])
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    meaning_id = params[:wordID]
-
-    sentence_list = MeaningsExampleSentence.where(:meaning_id => meaning_id)
-
-    result['chineseSentence'] = Hash.new
-    result['englishSentence'] = Hash.new
-    sentence_list.each_with_index { |val, idx|
-      result['chineseSentence'][idx.to_s] = ExampleSentence.find(val.example_sentences_id).chinese_sentence
-      result['englishSentence'][idx.to_s] = ExampleSentence.find(val.example_sentences_id).english_sentence
-    }
-
-    result['msg'] = Utilities::Message::MSG_OK
-
-    return render json: result
-  end
-
-  # get /getQuiz
-  def do_quiz
-    result = Hash.new
-    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
-
-    # Validating word
-    if !ValidationHandler.validate_input_word(params[:word])
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-    word_under_test = params[:word]
-
-    # Validating category
-    if !ValidationHandler.validate_input_category(params[:category])
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-    category = params[:category]
-
-    # Validating level
-    if !ValidationHandler.validate_input_level(params[:level])
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-    level = params[:level]
-
-    begin
-      distractors_str = `python "public/MCQ Generation/MCQGenerator.py" #{category} #{level} #{word_under_test}`
-    rescue Exception => e
-      Rails.logger.warn "MCQGenerator.py: Error e.msg=>[" + e.message + "]"
-      result['msg'] = Utilities::Message::MSG_GET_QUIZ_ERROR_IN_GENERATION
-      return render json: result, status: :internal_server_error
-    end
-
-    distractors = distractors_str.split(',')
-    Rails.logger.debug "#{word_under_test} has  #{distractors.size} distractors"
-
-    quiz = Hash.new
-
-    quiz[word_under_test] = Hash.new
-    quiz[word_under_test]['isTest'] = 1 # TODO rename isTest to testType
-    quiz[word_under_test]['choices'] = Hash.new
-
-    distractors.each_with_index { |val, idx|
-      quiz[word_under_test]['choices'][idx.to_s] = val.strip
-    }
-
-    hard_coded_quiz = HardCodedQuiz.where(:url => @url, :word => word_under_test)  ## <<--- is url needed???
-    if hard_coded_quiz.length > 0
-
-      quiz[word_under_test]['choices']['0'] = hard_coded_word.first.option1
-      quiz[word_under_test]['choices']['1'] = hard_coded_word.first.option2
-      quiz[word_under_test]['choices']['2'] = hard_coded_word.first.option3
-    end
-
-    result['quiz'] = quiz
-    result['msg'] = Utilities::Message::MSG_OK
-
-    return render json: result
   end
 end

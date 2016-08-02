@@ -267,7 +267,7 @@ class UsersController < ApplicationController
     @move = params[:move]
 
     #puts "Log: User " + @user.id.to_s + ":" + @time_elapsed.to_s + ":" + @move.to_s
-    UserActionLogger.info( "Log: User[" + user_name + "], Elasped_t:" + @time_elapsed.to_s + ", Action:" + @move.to_s )
+    USER_ACTION_LOGGER.info( "Log: User[" + user_name + "], Elasped_t:" + @time_elapsed.to_s + ", Action:" + @move.to_s )
 
     result['msg'] = Utilities::Message::MSG_OK
     return render json: result

@@ -1,14 +1,5 @@
 TranslateApp::Application.routes.draw do
 
-  get 'hardcode/new'
-  post 'hardcode/add'
-  get 'hardcode/view'
-  get 'hardcode/delete'
-  get 'hardcode/newquiz'
-  post 'hardcode/addquiz'
-  get 'hardcode/viewquiz'
-  get 'hardcode/deletequiz'
-
   # TODO: comment these three in production mode
   resources :users
   resources :dictionaries
@@ -17,7 +8,7 @@ TranslateApp::Application.routes.draw do
   match '/show_by_dictionary', to: 'translates#replacements_by_dictionary', via: :post
   match '/show', to: 'translates#replacements_by_bing', via: :post
   match '/show_multiple', to: 'translates#replacements_multiple_paragraphs_by_bing', via: :post
-  match '/remember', to: 'translates#remember', via: [:get, :post]
+  match '/remember', to: 'translates#remember', via: :post
   match '/getQuiz', to: 'translates#quiz', via: :get
   match '/getNumber', to: 'translates#calculate', via: :get
   match '/displayHistory', to: 'users#display_history', via: :get

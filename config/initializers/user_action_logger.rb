@@ -5,5 +5,5 @@ class UserActionLogger < Logger
   end
 end
 
-UserActionLogger = UserActionLogger.new('log/user_action.log')
-UserActionLogger.level = Logger::INFO
+USER_ACTION_LOGGER = UserActionLogger.new('log/user_action.log')
+USER_ACTION_LOGGER.level = Logger::INFO
