@@ -73,6 +73,7 @@ class UsersController < ApplicationController
     return render json: result
   end
 
+  # TODO: receive language as a parameter
   def display_history
     # @user_name = params[:name]
     # @user = User.where(:user_name => @user_name).first

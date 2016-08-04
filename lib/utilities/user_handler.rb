@@ -56,10 +56,12 @@ module UserHandler
     end
 
     userID = userID.to_i
-    if !userID.between?(USER_ID_CREATE_MIN, USER_ID_CREATE_MAX)
-      Rails.logger.debug "validate_userID; ID is not in valid range"
-      return false
-    end
+    
+    # TODO: enable this after fixing client side
+    #if !userID.between?(USER_ID_CREATE_MIN, USER_ID_CREATE_MAX)
+    #  Rails.logger.debug "validate_userID; ID is not in valid range"
+    #  return false
+    #end
 
     #Rails.logger.debug "validate_userID; ID[" + userID.to_s + "] is valid"
     return true

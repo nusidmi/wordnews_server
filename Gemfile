@@ -45,6 +45,10 @@ gem 'newrelic_rpm'
 
 gem "savon", "~> 2.10.0"
 
+# ruby NLP
+#gem 'birch', :git=>"https://github.com/faustoct/birch.git"
+#gem 'treat'
+
 # To use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
 

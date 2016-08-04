@@ -5,6 +5,8 @@ module Utilities::Message
     MSG_INVALID_PARA                            = 'Invalid parameters'
     MSG_NOT_FOUND                               = 'Not found in database'
     MSG_UPDATE_FAIL                             = 'Update failed'
+    MSG_DELETE_FAIL                             = 'Delete failed'
+
 
     # /getNumber
     MSG_GET_CALCULATE_USER_CREATE_FAILURE       = 'User creation failed'
@@ -18,4 +20,5 @@ module Utilities::Message
 
     # /getQuiz.json
     MSG_GET_QUIZ_ERROR_IN_GENERATION            = 'Quiz generation error'
+  
 end

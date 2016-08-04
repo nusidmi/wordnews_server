@@ -2,6 +2,7 @@
 
 <table class="table table-striped">
   <tr>
+    <th>Internal ID</th>
     <th>User ID</th>
     <th>Annotation ID</th>
     <th>Selected text</th>
@@ -9,7 +10,8 @@
     <th>Language</th>
     <th>Paragraph idx</th>
     <th>Text idx</th>
-    <th>Url</th>
+    <th>Article ID</th>
+    <th>Article URL</th>
     <th></th>
     <th></th>
     <th></th>
@@ -17,6 +19,7 @@
 
 <% @annotations.each do |annotation| %>
   <tr>
+    <td><%= annotation.id %></td>
     <td><%= annotation.user_id %></td>
     <td><%= annotation.ann_id %></td>
     <td><%= annotation.selected_text %></td>
@@ -24,7 +27,8 @@
     <td><%= annotation.lang %></td>
     <td><%= annotation.paragraph_idx %></td>
     <td><%= annotation.text_idx %></td>
-    <td><%= annotation.url %></td>
+    <td><%= annotation.article_id%></td>
+    <td><%= annotation.article.nil? ? '': annotation.article.url%></td>
     <td><%= link_to 'Show', annotation %></td>
     <td><%= link_to 'Edit', edit_annotation_path(annotation) %></td>
     <td><%= link_to 'Destroy', annotation, confirm: 'Are you sure?', method: :delete %></td>
