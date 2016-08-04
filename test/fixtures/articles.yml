@@ -1,0 +1,15 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+one:
+  website: MyString
+  url: MyString
+  url_postfix: MyString
+  annotation_count: 
+  language: MyString
+
+two:
+  website: MyString
+  url: MyString
+  url_postfix: MyString
+  annotation_count: 
+  language: MyString

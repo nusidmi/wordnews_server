@@ -1,6 +1,6 @@
 class CreateArticles < ActiveRecord::Migration
   def change
-    create_table :article do |t|
+    create_table :articles do |t|
       t.string :website
       t.string :url
       t.string :url_postfix

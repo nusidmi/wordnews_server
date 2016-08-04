@@ -1,0 +1,16 @@
+
+<h1>All the articles annotated  by <%=  @user.user_name %></h1>
+
+<table class="table table-striped">
+  <tr>
+    <th>No. </th>
+    <th>Article ID</th>
+  </tr>
+
+<% @urls.each_with_index  do |url, index| %>
+  <tr>
+    <td><%=index+1 %></td>
+    <td><%=url %></td>
+  </tr>
+<% end %>
+</table>

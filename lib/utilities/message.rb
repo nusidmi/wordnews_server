@@ -3,5 +3,6 @@ module Utilities::Message
   MSG_NOT_FOUND = 'Not found in database'
   MSG_OK = 'OK'
   MSG_UPDATE_FAIL = 'Update failed'
+  MSG_DELETE_FAIL = 'Delete failed'
     
 end

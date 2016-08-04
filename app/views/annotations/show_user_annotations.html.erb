@@ -17,7 +17,9 @@
     <td><%= annotation.lang %></td>
     <td><%= annotation.selected_text %></td>
     <td><%= annotation.translation %></td>
-    <td><a href='<%= annotation.url %>'><%= annotation.url %></a></td>
+    <!--<td><a href='<%= annotation.url %>'><%= annotation.url %></a></td>-->
+    <!-- TODO: show link-->
+    <td><%= annotation.article.nil? ? '': annotation.article.url%></td>
   </tr>
 <% end %>
 </table>

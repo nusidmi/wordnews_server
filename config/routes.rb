@@ -1,5 +1,7 @@
 TranslateApp::Application.routes.draw do
 
+  resources :articles
+
   get 'hardcode/new'
   post 'hardcode/add'
   get 'hardcode/view'
@@ -30,15 +32,16 @@ TranslateApp::Application.routes.draw do
   match '/validate_google_id_token', to: 'users#validate_google_id_token', via: [:get, :post]
   
   
+  # TODO: get -> post
   match '/create_annotation', to: 'annotations#create', via: [:get,:post]
-  match '/delete_annotation', to: 'annotations#destroy', via: :get
-  match '/update_annotation', to: 'annotations#update_translation', via: :get
-  match '/show_annotation_by_user_url', to: 'annotations#show_by_user_url', via: :get
-  match '/show_annotation_by_url', to: 'annotations#show_by_url', via: :get
-  match '/show_annotation_count_by_url', to: 'annotations#show_count_by_url', via: :get
-  match '/show_user_annotation_history', to: 'annotations#show_user_annotation_history', via: :get
-  match '/show_user_annotations', to: 'annotations#show_user_annotations', via: :get
-  match '/show_user_annotation_urls', to: 'annotations#show_user_urls', via: :get
+  match '/delete_annotation', to: 'annotations#destroy', via: [:get, :post]
+  match '/update_annotation', to: 'annotations#update_translation', via: [:get, :post]
+  match '/show_annotation_by_user_url', to: 'annotations#show_by_user_url', via: [:get, :post]
+  match '/show_annotation_by_url', to: 'annotations#show_by_url', via: [:get, :post]
+  match '/show_annotation_count_by_url', to: 'annotations#show_count_by_url', via: [:get, :post]
+  match '/show_user_annotation_history', to: 'annotations#show_user_annotation_history', via: [:get, :post]
+  match '/show_user_annotations', to: 'annotations#show_user_annotations', via: [:get, :post]
+  match '/show_user_annotation_urls', to: 'annotations#show_user_urls', via: [:get, :post]
   
   match '/get_user_id_by_user_name', to: 'users#get_id_by_username', via: :get
   
