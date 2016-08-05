@@ -211,7 +211,8 @@ class AnnotationsController < ApplicationController
         or !params[:annotation][:text_idx].present?\
         or !params[:annotation][:url].present? \
         or !params[:annotation][:url_postfix].present? \
-        or !params[:annotation][:website].present?) 
+        or !params[:annotation][:website].present?)
+        
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA }, 
                       status: :bad_request } 
@@ -222,7 +223,17 @@ class AnnotationsController < ApplicationController
     # Obtain article or create if not exists
     article = get_or_create_article(
       params[:annotation][:url], params[:annotation][:url_postfix],
-      params[:annotation][:lang], params[:annotation][:website])
+      params[:annotation][:lang], params[:annotation][:website], 
+      params[:annotation][:title], params[:annotation][:publication_date])
+      
+      # if params[:annotation][:title].present?
+      #   @annotation.title = params[:annotation][:title]
+      # end
+      
+      # if params[:annotation][:publication_date].present?
+      #   @annotation.publication_date = params[:annotation][:publication_date]
+      # end
+      
       
     @annotation = Annotation.new(
       ann_id: params[:annotation][:ann_id], 
@@ -233,6 +244,7 @@ class AnnotationsController < ApplicationController
       paragraph_idx: params[:annotation][:paragraph_idx],
       text_idx: params[:annotation][:text_idx],
       article_id: article.id)
+      
       
     Annotation.transaction do
       if @annotation.save and article.update_attribute(:annotation_count, article.annotation_count+1)
@@ -345,11 +357,13 @@ class AnnotationsController < ApplicationController
   end
   
     
-  def get_or_create_article(url, url_postfix, lang, website)
+  def get_or_create_article(url, url_postfix, lang, website, title, publication_date)
     article = Article.where('url_postfix=? AND lang=?', url_postfix, lang).first
 
     if article.nil?
-      article = Article.new(website: website, url: url, url_postfix: url_postfix, lang: lang, annotation_count: 0)
+      article = Article.new(website: website, url: url, url_postfix: url_postfix, 
+                            lang: lang, annotation_count: 0, title: title, 
+                            publication_date: publication_date)
       article.save
     end
     return article
