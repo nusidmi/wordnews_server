@@ -1,4 +1,6 @@
 class ArticlesController < ApplicationController
+  require 'date'
+  
   # GET /articles
   # GET /articles.json
   def index
@@ -80,4 +82,43 @@ class ArticlesController < ApplicationController
       format.json { head :no_content }
     end
   end
+  
+  
+  # from_date and to_date are optional (both provided or both omitted)
+  def show_most_annotated_urls
+    if !params[:lang].present?  or !params[:num].present?  \
+        or !ValidationHandler.validate_integer(params[:num]) \
+        or params[:from_date].present?^params[:to_date].present?
+      respond_to do |format|
+        format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request}
+      end
+    return
+    end
+    
+    if params[:from_date].present? and params[:to_date].present? 
+      @from_date = params[:from_date]
+      @to_date = params[:to_date]
+    
+      if !ValidationHandler.validate_date(@from_date) or !ValidationHandler.validate_date(@to_date)
+        respond_to do |format|
+          format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request}
+        end
+        return
+      end
+      
+      @articles = Article.where(lang: params[:lang], publication_date: 
+                                @from_date..@to_date).order('annotation_count desc').limit(params[:num])
+    else
+       @articles = Article.where(lang: params[:lang]).order('annotation_count desc').limit(params[:num])
+    end
+    
+    respond_to do |format|
+      format.json { render json: {msg: Utilities::Message::MSG_OK, urls: @articles}, 
+                  status: :ok}
+      format.html # show_most_annotated_url.html.erb
+    end
+  end
+  
 end

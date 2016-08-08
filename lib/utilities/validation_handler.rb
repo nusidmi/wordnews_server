@@ -112,5 +112,12 @@ module ValidationHandler
     end
     return true
   end
-
+  
+  def ValidationHandler.validate_date(date)
+    return Date.parse date rescue false
+  end
+  
+  def ValidationHandler.validate_integer(num)
+    return num.is_a? Integer
+  end
 end
