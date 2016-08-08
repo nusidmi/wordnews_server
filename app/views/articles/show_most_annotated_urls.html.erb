@@ -1,21 +1,21 @@
-<h1>Most Annotated articles from <%= from_date %> to <%= to_date %></h1>
+<h1>Most Annotated articles <%= @time_msg %></h1>
 
 <table class="table table-striped">
   <tr>
-    <th>Website</th>
-    <th>Url</th>
-    <th>Url postfix</th>
+    <td>No.</td>
+    <th>Article</th>
     <th>Annotation count</th>
     <th>Language</th>
+    <th>Publication Date</th>
   </tr>
 
-<% @articles.each do |article| %>
+<% @articles.each_with_index do |article, index| %>
   <tr>
-    <td><%= article.website %></td>
-    <td><%= article.url %></td>
-    <td><%= article.url_postfix %></td>
+    <td><%=index+1 %></td>
+    <td><a href='<%=article.url %>'><%= article.title %></a></td>
     <td><%= article.annotation_count %></td>
     <td><%= article.lang %></td>
+    <td><%= article.publication_date %></td>
   </tr>
 <% end %>
 </table>

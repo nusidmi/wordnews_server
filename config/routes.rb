@@ -32,7 +32,7 @@ TranslateApp::Application.routes.draw do
   match '/show_user_annotation_history', to: 'annotations#show_user_annotation_history', via: [:get, :post]
   match '/show_user_annotations', to: 'annotations#show_user_annotations', via: [:get, :post]
   match '/show_user_annotated_urls', to: 'annotations#show_user_urls', via: [:get, :post]
-  match '/show_most_annotated_urls', to: 'articles#show_most_annotated_urls', via: :post
+  match '/show_most_annotated_urls', to: 'articles#show_most_annotated_urls', via: [:get, :post]
   
   
   match '/get_user_id_by_user_name', to: 'users#get_id_by_username', via: :get

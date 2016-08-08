@@ -96,6 +96,7 @@ class ArticlesController < ApplicationController
     return
     end
     
+    
     if params[:from_date].present? and params[:to_date].present? 
       @from_date = params[:from_date]
       @to_date = params[:to_date]
@@ -110,14 +111,16 @@ class ArticlesController < ApplicationController
       
       @articles = Article.where(lang: params[:lang], publication_date: 
                                 @from_date..@to_date).order('annotation_count desc').limit(params[:num])
+      @time_msg = 'from ' + @from_date + ' to ' + @to_date
     else
-       @articles = Article.where(lang: params[:lang]).order('annotation_count desc').limit(params[:num])
+      @articles = Article.where(lang: params[:lang]).order('annotation_count desc').limit(params[:num])
+      @time_msg = 'all the time'
     end
     
     respond_to do |format|
+      format.html # show_most_annotated_urls.html.erb
       format.json { render json: {msg: Utilities::Message::MSG_OK, urls: @articles}, 
                   status: :ok}
-      format.html # show_most_annotated_url.html.erb
     end
   end
   
