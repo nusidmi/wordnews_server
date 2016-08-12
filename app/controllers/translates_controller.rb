@@ -1,17 +1,107 @@
 #!bin/env ruby
 #encoding: utf-8
 require 'json'
+require 'set'
 
 class TranslatesController < ApplicationController
-  #include UserHandler
-  #include Bing
+
+  # Params: lang, text in the paragraph, and paragraph index
+  # Return: {[word, translation, paragraph_index, word_index]
+  def translate_with_annotations
+    # lang = params[:lang]
+    #translator = params[:translator]
+    num_of_words = params[:num_of_words].to_i
+
+    # pre-process text
+    @sentences = []
+    @paragraphs = {} # idx: Paragraph
+    
+    params[:paragraphs].each do |idx, paragraph|
+      p = Utilities::Paragraph.new(paragraph[:paragraph_index], paragraph[:text])
+      s = p.process_text()
+      @sentences += s
+      @paragraphs[p.index] = p
+    end 
+    
+    words_to_learn = select_learn_words(num_of_words, @sentences, @paragraphs)
+
+    # 3. obtain the translation
+    
+    
+    
+    respond_to do |format|
+      format.json { render json: { msg: Utilities::Message::MSG_OK}, 
+                    status: :ok }
+    end
+  end
+  
+  def translate
+  end
 
   
-  def select_learn_words(user, num_words, paras)
-    # 1. sentence segmentation
-    # 2. word tokenization
+  # 1. noun, verb, adj, adv only
+  # 2. no duplicate words
+  # 3. omit word in phrased annotations (TODO)
+  # 4. consider word difficulty level and user's knowledge level (TODO)
+  def select_learn_words(num_of_words, sentences, paragraphs)
+    sentences.shuffle
+    words_to_learn = []
+    word_set = Set.new
+
+    i = 0
+    sentences.each do |sentence|
+      if i>=num_of_words
+        break
+      end
+      
+      # one word per sentence
+      sentence.words.each_with_index do |word, index|
+        tag = sentence.tags[index]
+        if !word_set.include?(word) and Utilities::Text.is_proper_to_learn(word, tag)
+          word_index = paragraphs[sentence.paragraph_index].get_word_occurence_index(word, 
+          sentence.sentence_index, index)
+          w = Utilities::Word.new(word, sentence.paragraph_index, 
+                                  sentence.sentence_index, word_index)
+          words_to_learn.push(w)
+          puts word
+          i += 1
+          word_set.add(word)
+          break
+        end
+      end
+    end
+    return words_to_learn
+  end
+  
+  
+  def get_learning_history(words, user_id, lang)
     
     
+  end
+  
+  
+  
+  def translate_by_dictionary(words)
+    words.each do |word|
+      source = word.text.downcase.singularize
+      
+    end
+  end
+  
+  
+  
+  
+  
+  # TODO: Extend this to support other languages
+  def generate_quiz(lang, word)
+    if lang=='zh_CN'
+      return generate_quiz_chinese()
+    else
+      return nil
+    end
+  end
+  
+  def generate_quiz_chinese(word)
     
   end
   
@@ -689,4 +779,6 @@ class TranslatesController < ApplicationController
 
     return result
   end
+  
+  
 end

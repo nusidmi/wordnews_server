@@ -34,6 +34,8 @@ TranslateApp::Application.routes.draw do
   match '/show_user_annotated_urls', to: 'annotations#show_user_urls', via: [:get, :post]
   match '/show_most_annotated_urls', to: 'articles#show_most_annotated_urls', via: [:get, :post]
   
+  match '/translate_with_annotations', to: 'translates#translate_with_annotations', via: :post
+  
   
   match '/get_user_id_by_user_name', to: 'users#get_id_by_username', via: :get
   
