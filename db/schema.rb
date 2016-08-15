@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160805090253) do
+ActiveRecord::Schema.define(:version => 20160815052022) do
 
   create_table "annotations", :force => true do |t|
     t.integer  "user_id"
@@ -132,6 +132,15 @@ ActiveRecord::Schema.define(:version => 20160805090253) do
 
   add_index "histories", ["meaning_id"], :name => "histories_meaning"
   add_index "histories", ["user_id"], :name => "histories_user"
+
+  create_table "learning_histories", :force => true do |t|
+    t.integer  "user_id"
+    t.integer  "meanings_id"
+    t.integer  "view_count"
+    t.integer  "test_count"
+    t.datetime "created_at",  :null => false
+    t.datetime "updated_at",  :null => false
+  end
 
   create_table "meanings", :force => true do |t|
     t.integer  "chinese_words_id"

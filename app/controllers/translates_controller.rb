@@ -9,7 +9,7 @@ class TranslatesController < ApplicationController
   # Return: {[word, translation, paragraph_index, word_index]
   def translate_with_annotations
     # lang = params[:lang]
-    #translator = params[:translator]
+    translator = params[:translator]
     num_of_words = params[:num_of_words].to_i
 
     # pre-process text
@@ -26,8 +26,15 @@ class TranslatesController < ApplicationController
     words_to_learn = select_learn_words(num_of_words, @sentences, @paragraphs)
 
     # 3. obtain the translation
+    if translator=='dictionary'
+      translate_by_dictionary(words_to_learn)
+    elif translator=='bing'
+      translate_by_bing()
+    elif translator=='ims'
+      translate_by_ims()
+    end
     
-    
+    # response
     
     respond_to do |format|
       format.json { render json: { msg: Utilities::Message::MSG_OK}, 
@@ -40,10 +47,11 @@ class TranslatesController < ApplicationController
 
   
   # 1. noun, verb, adj, adv only
-  # 2. no duplicate words
-  # 3. omit word in phrased annotations (TODO)
-  # 4. consider word difficulty level and user's knowledge level (TODO)
-  def select_learn_words(num_of_words, sentences, paragraphs)
+  # 2. word is in the dictionary
+  # 3. no duplicate words
+  # 4. omit word in phrased annotations (TODO)
+  # 5. consider word difficulty level and user's knowledge level (TODO)
+  def select_learn_words(num_of_words, user_id, sentences, paragraphs)
     sentences.shuffle
     words_to_learn = []
     word_set = Set.new
@@ -57,39 +65,59 @@ class TranslatesController < ApplicationController
       # one word per sentence
       sentence.words.each_with_index do |word, index|
         tag = sentence.tags[index]
-        if !word_set.include?(word) and Utilities::Text.is_proper_to_learn(word, tag)
+        if !word_set.include?(word) and Utilities::Text.is_proper_to_learn(word, tag) and !word.get_word_db_id.nil?
           word_index = paragraphs[sentence.paragraph_index].get_word_occurence_index(word, 
           sentence.sentence_index, index)
           w = Utilities::Word.new(word, sentence.paragraph_index, 
                                   sentence.sentence_index, word_index)
-          words_to_learn.push(w)
-          puts word
-          i += 1
-          word_set.add(word)
-          break
+                                  
+          # get translation
+          
+          # learn/test/skip                        
+          type = get_learning_history()
+          
+          if type!='skip'
+            words_to_learn.push(w)
+            #puts word
+            i += 1
+            word_set.add(word)
+          end
         end
       end
     end
     return words_to_learn
   end
   
-  
-  def get_learning_history(words, user_id, lang)
+  # TODO: design the rule 
+  # learn/test/skip the word based on user's learning history
+  def get_learn_type(meaning_id, user_id, lang)
+    
     
     
   end
+  
+  
+  
   
   
   
   def translate_by_dictionary(words)
     words.each do |word|
-      source = word.text.downcase.singularize
-      
+        translation_id = Meaning.find_by(english_words_id: word.word_db_id)
+        if !translation_id.nil?
+          translation = ChineseWords.find_by(chinese_words_id: translation_id)
+          word.translation = translation
+          word.translation_db_id = translation_id
+        end
     end
   end
   
   
+  def translate_by_bing
+  end
   
+  def translate_by_ims
+  end
   
   
   # TODO: Extend this to support other languages
