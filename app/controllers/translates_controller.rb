@@ -1,135 +1,17 @@
 #!bin/env ruby
 #encoding: utf-8
 require 'json'
-require 'set'
 
 class TranslatesController < ApplicationController
-
-  # Params: lang, text in the paragraph, and paragraph index
-  # Return: {[word, translation, paragraph_index, word_index]
-  def translate_with_annotations
-    # lang = params[:lang]
-    translator = params[:translator]
-    num_of_words = params[:num_of_words].to_i
-
-    # pre-process text
-    @sentences = []
-    @paragraphs = {} # idx: Paragraph
-    
-    params[:paragraphs].each do |idx, paragraph|
-      p = Utilities::Paragraph.new(paragraph[:paragraph_index], paragraph[:text])
-      s = p.process_text()
-      @sentences += s
-      @paragraphs[p.index] = p
-    end 
-    
-    words_to_learn = select_learn_words(num_of_words, @sentences, @paragraphs)
-
-    # 3. obtain the translation
-    if translator=='dictionary'
-      translate_by_dictionary(words_to_learn)
-    elif translator=='bing'
-      translate_by_bing()
-    elif translator=='ims'
-      translate_by_ims()
-    end
-    
-    # response
-    
-    respond_to do |format|
-      format.json { render json: { msg: Utilities::Message::MSG_OK}, 
-                    status: :ok }
-    end
-  end
-  
-  def translate
-  end
+  #include UserHandler
+  #include Bing
 
   
-  # 1. noun, verb, adj, adv only
-  # 2. word is in the dictionary
-  # 3. no duplicate words
-  # 4. omit word in phrased annotations (TODO)
-  # 5. consider word difficulty level and user's knowledge level (TODO)
-  def select_learn_words(num_of_words, user_id, sentences, paragraphs)
-    sentences.shuffle
-    words_to_learn = []
-    word_set = Set.new
-
-    i = 0
-    sentences.each do |sentence|
-      if i>=num_of_words
-        break
-      end
-      
-      # one word per sentence
-      sentence.words.each_with_index do |word, index|
-        tag = sentence.tags[index]
-        if !word_set.include?(word) and Utilities::Text.is_proper_to_learn(word, tag) and !word.get_word_db_id.nil?
-          word_index = paragraphs[sentence.paragraph_index].get_word_occurence_index(word, 
-          sentence.sentence_index, index)
-          w = Utilities::Word.new(word, sentence.paragraph_index, 
-                                  sentence.sentence_index, word_index)
-                                  
-          # get translation
-          
-          # learn/test/skip                        
-          type = get_learning_history()
-          
-          if type!='skip'
-            words_to_learn.push(w)
-            #puts word
-            i += 1
-            word_set.add(word)
-          end
-        end
-      end
-    end
-    return words_to_learn
-  end
-  
-  # TODO: design the rule 
-  # learn/test/skip the word based on user's learning history
-  def get_learn_type(meaning_id, user_id, lang)
+  def select_learn_words(user, num_words, paras)
+    # 1. sentence segmentation
+    # 2. word tokenization
     
     
-    
-  end
-  
-  
-  
-  
-  
-  
-  def translate_by_dictionary(words)
-    words.each do |word|
-        translation_id = Meaning.find_by(english_words_id: word.word_db_id)
-        if !translation_id.nil?
-          translation = ChineseWords.find_by(chinese_words_id: translation_id)
-          word.translation = translation
-          word.translation_db_id = translation_id
-        end
-    end
-  end
-  
-  
-  def translate_by_bing
-  end
-  
-  def translate_by_ims
-  end
-  
-  
-  # TODO: Extend this to support other languages
-  def generate_quiz(lang, word)
-    if lang=='zh_CN'
-      return generate_quiz_chinese()
-    else
-      return nil
-    end
-  end
-  
-  def generate_quiz_chinese(word)
     
   end
   
@@ -628,7 +510,9 @@ class TranslatesController < ApplicationController
         understand.meaning_id = meaning_id
         understand.url = url
         understand.frequency = is_remember
-        understand.save
+        unless meaning_id.nil? or meaning_id == 0
+ +        understand.save
+        end
       rescue Exception => e
         Rails.logger.warn "do_remember: Error in creating History e.msg=>[" + e.message + "]"
         result['msg'] = Utilities::Message::MSG_REMEMBER_HISTORY_CREATE_ERROR
@@ -807,6 +691,4 @@ class TranslatesController < ApplicationController
 
     return result
   end
-  
-  
 end

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160815052022) do
+ActiveRecord::Schema.define(:version => 20160816033112) do
 
   create_table "annotations", :force => true do |t|
     t.integer  "user_id"
@@ -21,15 +21,12 @@ ActiveRecord::Schema.define(:version => 20160815052022) do
     t.string   "lang"
     t.integer  "paragraph_idx"
     t.integer  "text_idx"
-    t.string   "url"
     t.datetime "created_at",    :null => false
     t.datetime "updated_at",    :null => false
     t.integer  "article_id"
   end
 
   add_index "annotations", ["article_id"], :name => "index_annotations_on_article_id"
-  add_index "annotations", ["url"], :name => "index_annotations_on_url"
-  add_index "annotations", ["user_id", "url", "selected_text", "lang"], :name => "index_annotations_on_user_id_and_url_and_selected_text_and_lang"
 
   create_table "articles", :force => true do |t|
     t.string   "website"
@@ -135,11 +132,12 @@ ActiveRecord::Schema.define(:version => 20160815052022) do
 
   create_table "learning_histories", :force => true do |t|
     t.integer  "user_id"
-    t.integer  "meanings_id"
+    t.integer  "meaning_id"
     t.integer  "view_count"
     t.integer  "test_count"
-    t.datetime "created_at",  :null => false
-    t.datetime "updated_at",  :null => false
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+    t.string   "lang"
   end
 
   create_table "meanings", :force => true do |t|
