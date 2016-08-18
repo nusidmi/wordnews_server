@@ -126,7 +126,6 @@ class LearningController < ApplicationController
   
   
   # English -> Chinese
-  # TODO: refine SQL after re-importing dictionary
   def translate_by_dictionary(word_id, word_pos, lang)
     if lang==Utilities::Lang::CODE[:Chinese] and POS_INDEX.has_key?(word_pos)
       translation_id = EnglishChineseTranslation.where('english_vocabularies_id=? AND pos_tag=? AND frequency_rank=0', word_id, POS_INDEX[word_pos]).pluck(:chinese_vocabularies_id)
@@ -148,12 +147,11 @@ class LearningController < ApplicationController
   end
 
   # TODO: design the rule
-  # TODO: rename learning history of meaning_id
   # view/test/skip the word based on user's learning history
   def get_learn_type(user_id, pair_id, lang)
-    learning_history = LearningHistory.where(user_id: user_id, meaning_id: pair_id, lang: lang).first
+    learning_history = LearningHistory.where(user_id: user_id, translation_pair_id: pair_id, lang: lang).first
     if learning_history.nil?
-      history = LearningHistory.new(user_id: user_id, meaning_id: pair_id, 
+      history = LearningHistory.new(user_id: user_id, translation_pair_id: pair_id, 
                                       lang: lang, view_count: 0, test_count: 0)
       history.save
       return 'view'
