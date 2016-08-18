@@ -100,7 +100,7 @@ with open('dictionary.csv', 'rb') as csvfile:
         chinese_word_id = result[0]
         
         
-        sql = "INSERT INTO english_chinese_translations (id, chinese_vocabularies_id, english_vocabularies_id, pos_tag, frequency_rank, created_at, updated_at) " + \
+        sql = "INSERT INTO english_chinese_translations (id, chinese_vocabulary_id, english_vocabulary_id, pos_tag, frequency_rank, created_at, updated_at) " + \
               "VALUES(nextval('english_chinese_translations_id_seq'), %s, %s, %s, %s, current_timestamp, current_timestamp)"
         category = get_pos_index(pos_tag)
         cursor.execute(sql, (chinese_word_id, english_word_id, category, count,))

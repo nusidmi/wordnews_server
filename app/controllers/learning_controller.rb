@@ -128,7 +128,7 @@ class LearningController < ApplicationController
   # English -> Chinese
   def translate_by_dictionary(word_id, word_pos, lang)
     if lang==Utilities::Lang::CODE[:Chinese] and POS_INDEX.has_key?(word_pos)
-      translation_id = EnglishChineseTranslation.where('english_vocabularies_id=? AND pos_tag=? AND frequency_rank=0', word_id, POS_INDEX[word_pos]).pluck(:chinese_vocabularies_id)
+      translation_id = EnglishChineseTranslation.where('english_vocabulary_id=? AND pos_tag=? AND frequency_rank=0', word_id, POS_INDEX[word_pos]).pluck(:chinese_vocabulary_id)
       if !translation_id.nil?
         translation = ChineseVocabulary.where(id: translation_id).pluck(:text).first
         return translation
@@ -179,7 +179,7 @@ class LearningController < ApplicationController
   
   def get_translation_pair_id(source_word_id, target_word_id, target_lang)
     if target_lang==Utilities::Lang::CODE[:Chinese]
-      return EnglishChineseTranslation.where(english_vocabularies_id: source_word_id, chinese_vocabularies_id: target_word_id).pluck(:id).first
+      return EnglishChineseTranslation.where(english_vocabulary_id: source_word_id, chinese_vocabulary_id: target_word_id).pluck(:id).first
     end
   end
   
