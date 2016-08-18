@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160816033112) do
+ActiveRecord::Schema.define(:version => 20160818032018) do
 
   create_table "annotations", :force => true do |t|
     t.integer  "user_id"
@@ -47,6 +47,31 @@ ActiveRecord::Schema.define(:version => 20160816033112) do
     t.datetime "updated_at",  :null => false
   end
 
+  create_table "chinese_voc_test", :id => false, :force => true do |t|
+    t.string   "text"
+    t.string   "pronunciation"
+    t.datetime "created_at",    :null => false
+    t.datetime "updated_at",    :null => false
+    t.integer  "id",            :null => false
+  end
+
+  create_table "chinese_voc_test2", :id => false, :force => true do |t|
+    t.string   "text"
+    t.string   "pronunciation"
+    t.datetime "created_at",    :null => false
+    t.datetime "updated_at",    :null => false
+    t.integer  "id",            :null => false
+  end
+
+  create_table "chinese_vocabularies", :force => true do |t|
+    t.string   "text"
+    t.string   "pronunciation"
+    t.datetime "created_at",    :null => false
+    t.datetime "updated_at",    :null => false
+  end
+
+  add_index "chinese_vocabularies", ["text"], :name => "index_chinese_vocabularies_on_text"
+
   create_table "chinese_words", :force => true do |t|
     t.string   "chinese_meaning"
     t.datetime "created_at",      :null => false
@@ -80,6 +105,35 @@ ActiveRecord::Schema.define(:version => 20160816033112) do
     t.datetime "created_at",             :null => false
     t.datetime "updated_at",             :null => false
   end
+
+  create_table "en_zh_trans_test", :id => false, :force => true do |t|
+    t.integer  "id",                      :null => false
+    t.integer  "chinese_vocabularies_id"
+    t.integer  "english_vocabularies_id"
+    t.string   "pos_tag"
+    t.integer  "frequency_rank"
+    t.datetime "created_at",              :null => false
+    t.datetime "updated_at",              :null => false
+  end
+
+  create_table "english_chinese_translations", :force => true do |t|
+    t.integer  "chinese_vocabularies_id"
+    t.integer  "english_vocabularies_id"
+    t.integer  "pos_tag"
+    t.integer  "frequency_rank"
+    t.datetime "created_at",              :null => false
+    t.datetime "updated_at",              :null => false
+  end
+
+  add_index "english_chinese_translations", ["english_vocabularies_id", "chinese_vocabularies_id", "pos_tag"], :name => "pair_pos_index"
+
+  create_table "english_vocabularies", :force => true do |t|
+    t.string   "text"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
+  add_index "english_vocabularies", ["text"], :name => "index_english_vocabularies_on_text"
 
   create_table "english_words", :force => true do |t|
     t.string   "english_meaning"

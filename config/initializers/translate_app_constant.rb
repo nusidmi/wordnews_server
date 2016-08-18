@@ -18,3 +18,4 @@ MAX_USER_CREATE_RETRIES                 = 5.freeze
 USER_ID_CREATE_MIN                      = 10000.freeze
 USER_ID_CREATE_MAX                      = 2000000000.freeze
 
+POS_INDEX                               = {'NN'=>1, 'VB'=>2, 'RB'=>4, 'JJ'=>5}

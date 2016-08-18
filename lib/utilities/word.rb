@@ -19,5 +19,5 @@ class Utilities::Word
   
   
   attr_accessor :text, :paragraph_index, :sentence_index, :word_index, :translation, 
-              :word_id, :translation_id, :meaning_id, :learn_type, :quiz, :annotations
+              :word_id, :translation_id, :pair_id, :learn_type, :quiz, :annotations
 end
