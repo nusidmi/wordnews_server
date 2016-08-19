@@ -37,7 +37,10 @@ class AnnotationsController < ApplicationController
     # obtain the article id
     article_id = get_article_id(params[:url_postfix], params[:lang])
     
-    @annotations = article_id.nil? ? {}: Annotation.where('user_id=? AND article_id=?', params[:user_id], article_id)
+    #@annotations = article_id.nil? ? {}: Annotation.where('user_id=? AND article_id=?', params[:user_id], article_id)
+    
+    @annotations = article_id.nil? ? {}: Annotation.joins(:annotation_histories).where('annotation_histories.user_id=? AND article_id=?', params[:user_id], article_id)
+     
       
     respond_to do |format|
       format.json { render json: {msg: Utilities::Message::MSG_OK, annotations: @annotations}, 
@@ -84,6 +87,7 @@ class AnnotationsController < ApplicationController
   
   
   # TODO: Move to users_controller.rb?
+  # lang is optional
   def show_user_annotation_history
     
     if !params[:user_id].present?
@@ -93,16 +97,15 @@ class AnnotationsController < ApplicationController
       end
       return
     end
-      
-      
+    
     if params[:lang].present?
-      sql = ['user_id=? and lang=?', params[:user_id], params[:lang]]
+      total_annotation = AnnotationHistory.where(user_id: params[:user_id], lang: params[:lang]).count('id')
+      total_url = AnnotationHistory.where(user_id: params[:user_id], lang: params[:lang]).joins(:annotation).count('article_id', distinct: true)
     else
-      sql = ['user_id=?', params[:user_id]]
+      total_annotation = AnnotationHistory.where(user_id: params[:user_id]).count('id')
+      total_url = AnnotationHistory.where(user_id: params[:user_id]).joins(:annotation).count('article_id', distinct: true)
     end
     
-    total_annotation = Annotation.count('id', :conditions=>sql)
-    total_url = Annotation.count('article_id', :conditions=>sql, distinct: true)
     respond_to do |format|
       format.json { render json: {msg: Utilities::Message::MSG_OK, 
                     history: {annotation: total_annotation, url: total_url}},
@@ -111,7 +114,6 @@ class AnnotationsController < ApplicationController
    
   end
   
-  # TODO: join the article table to obtain the full url
   # All the annotations done by a user
   # lang is optional
   def show_user_annotations    
@@ -134,9 +136,9 @@ class AnnotationsController < ApplicationController
     end
       
     if params[:lang].present?
-      @annotations = Annotation.where('user_id=? and lang=?', params[:user_id], params[:lang])
+      @annotations = Annotation.where('annotations.lang=?', params[:lang]).joins(:annotation_histories).where('user_id=?', params[:user_id])
     else
-      @annotations = Annotation.where('user_id=? ', params[:user_id])
+      @annotations = Annotation.joins(:annotation_histories).where('user_id=?', params[:user_id])
     end
     respond_to do |format|
       format.html # show_user_annotations.html.erb
@@ -167,10 +169,13 @@ class AnnotationsController < ApplicationController
       return
     end
     
+    #@annotations = article_id.nil? ? {}: Annotation.joins(:annotation_histories).where('annotation_histories.user_id=? AND article_id=?', params[:user_id], article_id)
+
+
     if params[:lang].present?
-      @urls = Annotation.where('user_id=? and lang=?', params[:user_id], params[:lang]).uniq.pluck(:article_id)
+      @article = Article.joins(:annotation_histories, :annotations).where('user_id=? and lang=?', params[:user_id], params[:lang]).uniq
     else
-      @urls = Annotation.where('user_id=?', params[:user_id]).uniq.pluck(:article_id)
+      @article = Article.joins(:annotation_histories, :annotations).where('user_id=?', params[:user_id]).uniq
     end
     respond_to do |format|
       format.html # show_user_annotations.html.erb
@@ -196,6 +201,7 @@ class AnnotationsController < ApplicationController
   def edit
     @annotation = Annotation.find(params[:id])
   end
+
 
   # POST /annotations
   # POST /annotations.json
@@ -235,9 +241,9 @@ class AnnotationsController < ApplicationController
       # end
       
       
-    @annotation = Annotation.new(
-      ann_id: params[:annotation][:ann_id], 
-      user_id: params[:annotation][:user_id],
+    @annotation = Annotation.where(
+      #ann_id: params[:annotation][:ann_id], 
+      #user_id: params[:annotation][:user_id],
       selected_text: params[:annotation][:selected_text],
       translation: params[:annotation][:translation],
       lang: params[:annotation][:lang],
@@ -245,17 +251,35 @@ class AnnotationsController < ApplicationController
       text_idx: params[:annotation][:text_idx],
       article_id: article.id)
       
+    # TODO: consider to increase upvote when annotation exists
+    if @annotaion.nil?
+      @annotation = Annotation.new(
+      selected_text: params[:annotation][:selected_text],
+      translation: params[:annotation][:translation],
+      lang: params[:annotation][:lang],
+      paragraph_idx: params[:annotation][:paragraph_idx],
+      text_idx: params[:annotation][:text_idx],
+      article_id: article.id)
+    end
+    
+    @annotation_history = AnnotationHistory.new(
+      client_ann_id: params[:annotation][:ann_id], 
+      user_id: params[:annotation][:user_id],
+      lang: params[:annotation][:lang])
       
     Annotation.transaction do
-      if @annotation.save and article.update_attribute(:annotation_count, article.annotation_count+1)
+      if @annotation.save and article.increment!(:annotation_count)
+        @annotation_history.annotation_id = @annotation.id
+        if @annotation_history.save 
           respond_to do |format|
              format.json { render json: {msg: Utilities::Message::MSG_OK, id: @annotation.id}, status: :ok }
           end
-      else
-        respond_to do |format|
-           format.json { render json: @annotation.errors, status: :bad_request }
-
+          return
         end
+      end
+      respond_to do |format|
+         format.json { render json: @annotation.errors, status: :bad_request }
+
       end
     end
   end
@@ -263,23 +287,23 @@ class AnnotationsController < ApplicationController
 
   # PUT /annotations/1
   # PUT /annotations/1.json
-  def update
-    @annotation = Annotation.find(params[:id])
+  # def update
+  #   @annotation = Annotation.find(params[:id])
 
-    respond_to do |format|
-      if @annotation.update_attributes(params[:annotation])
-        #format.html { redirect_to @annotation, notice: 'Annotation was successfully updated.' }
-        format.json { head :no_content }
-      else
-        #format.html { render action: "edit" }
-        format.json { render json: @annotation.errors, status: :unprocessable_entity }
-      end
-    end
-  end
+  #   respond_to do |format|
+  #     if @annotation.update_attributes(params[:annotation])
+  #       #format.html { redirect_to @annotation, notice: 'Annotation was successfully updated.' }
+  #       format.json { head :no_content }
+  #     else
+  #       #format.html { render action: "edit" }
+  #       format.json { render json: @annotation.errors, status: :unprocessable_entity }
+  #     end
+  #   end
+  # end
   
   
   def update_translation
-    if !params[:id].present? or !params[:translation].present?
+    if !params[:id].present? or !params[:translation].present? or !params[:user_id]
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA }, 
                       status: :bad_request } 
@@ -288,7 +312,9 @@ class AnnotationsController < ApplicationController
     end
     
     @annotation = Annotation.find_by_id(params[:id])
-    if @annotation.nil?
+    @user_history = AnnotationHistory.where(annotation_id: params[:id], user_id: params[:user_id])
+
+    if @annotation.nil? or @user_history.nil?
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_NOT_FOUND}, 
                       status: :ok }
@@ -296,17 +322,32 @@ class AnnotationsController < ApplicationController
       return
     end
     
-    if @annotation.update_attribute(:translation, params[:translation])
-      respond_to do |format|
-        format.json { render json:{ msg: Utilities::Message::MSG_OK}, 
-                      status: :ok}
-      end
-    else
-      respond_to do |format|
-        format.json { render json:{ msg: Utilities::Message::MSG_UPDATE_FAIL}, 
-                      status: :ok} 
+    @new_annotation = Annotation.new(
+      selected_text: @annotation.selected_text,
+      translation: params[:translation],
+      lang: @annotation.lang,
+      paragraph_idx: @annotation.paragraph_idx,
+      text_idx: @annotation.text_idx,
+      article_id: @annotation.article_id)
+  
+    # delete previous annotation if no other users link to
+    user_count = AnnotationHistory.where(annotation_id: params[:id]).count
+
+    Annotation.transaction do
+      if (user_count>1 or @annotation.destroy) and @new_annotation.save and @user_history.update_attribute(annotation_id: @new_annotation.id)
+        respond_to do |format|
+          format.json { render json:{ msg: Utilities::Message::MSG_OK, id: @new_annotation.id}, 
+                        status: :ok}
+        end
+        return
       end
     end
+    
+    respond_to do |format|
+      format.json { render json:{ msg: Utilities::Message::MSG_UPDATE_FAIL}, 
+                        status: :ok} 
+    end
+        
   end
     
     
@@ -314,7 +355,7 @@ class AnnotationsController < ApplicationController
   # DELETE /annotations/1
   # DELETE /annotations/1.json
   def destroy
-    if !params[:id].present?
+    if !params[:id].present? or !params[:user_id]
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
                         status: :bad_request }
@@ -323,7 +364,9 @@ class AnnotationsController < ApplicationController
     end
       
     @annotation = Annotation.find_by_id(params[:id])
-    if @annotation.nil?
+    @user_history = AnnotationHistory.where(annotation_id: params[:id], user_id: params[:user_id])
+
+    if @annotation.nil? or @user_history.nil?
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_NOT_FOUND}, 
                       status: :ok }
@@ -340,19 +383,22 @@ class AnnotationsController < ApplicationController
       return
     end
     
+    user_count = AnnotationHistory.where(annotation_id: params[:id]).count
+
+    
     Annotation.transaction do
-      @annotation.destroy
-      article.update_attribute(:annotation_count, article.annotation_count-1)
+      if (user_count>1 or @annotation.destroy) and @user_history.destroy and article.decrement!(:annotation_count)
+        respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_OK}, 
+                      status: :ok }
+        end
+        return
+      end
     end
 
     respond_to do |format|
-      if @annotation.destroyed?
-        format.json { render json: { msg: Utilities::Message::MSG_OK },
+      format.json { render json: { msg: Utilities::Message::MSG_DELETE_FAIL },
                       status: :ok}
-      else
-        format.json { render json: { msg: Utilities::Message::MSG_DELETE_FAIL },
-                      status: :ok}
-      end
     end
   end
   

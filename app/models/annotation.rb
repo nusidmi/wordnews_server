@@ -1,4 +1,6 @@
+# TODO: remove columns
 class Annotation < ActiveRecord::Base
-  attr_accessible :ann_id, :lang, :paragraph_idx, :selected_text, :text_idx, :translation, :url, :user_id, :article_id
+  attr_accessible :lang, :paragraph_idx, :selected_text, :text_idx, :translation, :article_id, :article
   belongs_to :article
+  has_many :annotation_histories
 end
