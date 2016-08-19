@@ -33,6 +33,7 @@ TranslateApp::Application.routes.draw do
   match '/show_user_annotations', to: 'annotations#show_user_annotations', via: [:get, :post]
   match '/show_user_annotated_urls', to: 'annotations#show_user_urls', via: [:get, :post]
   match '/show_most_annotated_urls', to: 'articles#show_most_annotated_urls', via: [:get, :post]
+  match '/vote_annotation', to: 'annotations#vote', via: [:get, :post]
   
   match '/show_learn_words', to: 'learning#show_learn_words', via: :post
   

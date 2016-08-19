@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160819070931) do
+ActiveRecord::Schema.define(:version => 20160819082340) do
 
   create_table "annotation_histories", :force => true do |t|
     t.integer  "user_id"
@@ -31,8 +31,7 @@ ActiveRecord::Schema.define(:version => 20160819070931) do
     t.datetime "created_at",                   :null => false
     t.datetime "updated_at",                   :null => false
     t.integer  "article_id"
-    t.integer  "upvote",        :default => 0
-    t.integer  "downvote",      :default => 0
+    t.integer  "vote",          :default => 0
   end
 
   add_index "annotations", ["article_id"], :name => "index_annotations_on_article_id"
@@ -235,6 +234,14 @@ ActiveRecord::Schema.define(:version => 20160819070931) do
     t.string   "translate_categories"
     t.datetime "created_at",           :null => false
     t.datetime "updated_at",           :null => false
+  end
+
+  create_table "vote_histories", :force => true do |t|
+    t.integer  "user_id"
+    t.integer  "annotation_id"
+    t.integer  "vote",          :default => 0
+    t.datetime "created_at",                   :null => false
+    t.datetime "updated_at",                   :null => false
   end
 
   create_table "word_categories", :force => true do |t|
