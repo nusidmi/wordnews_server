@@ -100,7 +100,7 @@ class LearningController < ApplicationController
     return words_to_learn
   end
   
-  # TODO: refine after obtaining user feedback
+  # Return at most ANNOTATION_COUNT_MAX top voted annotations
   # TODO: database index
   def get_annotations(url_postfix, lang)
     article_id = Article.where('url_postfix=? AND lang=?', url_postfix, lang).pluck(:id).first
@@ -108,7 +108,7 @@ class LearningController < ApplicationController
     @words_to_learn.each do |word|
       if word.learn_type=='view'
         word.annotations = Annotation.where('article_id=? AND paragraph_idx=? AND text_idx=? AND selected_text=?',
-                                    article_id, word.paragraph_index, word.word_index, word.text)
+            article_id, word.paragraph_index, word.word_index, word.text).order('vote desc').limit(ANNOTATION_COUNT_MAX)
       end
     end
   end
