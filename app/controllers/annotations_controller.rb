@@ -402,57 +402,6 @@ class AnnotationsController < ApplicationController
     end
   end
   
-  
-  # TODO: update user table
-  # Do not update any table if user has voted the same annotation before
-  def vote
-    if !params[:annotation_id].present? or !params[:user_id] or 
-      !params[:score].present? or !ValidationHandler.validate_integer(params[:score])
-      respond_to do |format|
-        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
-                        status: :bad_request }
-      end
-      return
-    end
-    
-    @user = User.find_by_id(params[:user_id])
-    @annotation = Annotation.find_by_id(params[:annotation_id])
-    @vote_history = VoteHistory.where(user_id: params[:user_id]).first
-    score = params[:score].to_i
-    
-    
-    if @user.nil? or @annotation.nil?
-      respond_to do |format|
-        format.json { render json: {msg: Utilities::Message::MSG_NOT_FOUND}, 
-                      status: :bad_request}
-      end
-      return
-    end
-    
-    success = true
-    Annotation.transaction do
-      if @vote_history.nil?
-        @vote_history = VoteHistory.new(annotation_id: @annotation.id, user_id: @user.id, vote: params[:score])
-        success &&= @vote_history.save 
-        success &&= @annotation.update_attribute(:vote, @annotation.vote+score)
-      elsif @vote_history.vote!=score
-          success &&= @annotation.update_attribute(:vote, @annotation.vote+score-@vote_history.vote)
-          success &&= @vote_history.update_attribute(:vote, score)
-      end
-    end
-    
-    respond_to do |format|
-      if success
-        format.json { render json: { msg: Utilities::Message::MSG_OK },
-                      status: :ok}
-      else
-        format.json { render json: { msg: Utilities::Message::MSG_VOTE_FAIL },
-                      status: :ok}
-      end
-    end
-  end
-  
-  
   #private
     #def validate_annotation
     #  params.require[:annotation].permits(:)

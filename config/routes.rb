@@ -1,5 +1,7 @@
 TranslateApp::Application.routes.draw do
 
+  get "feedbacks/vote"
+
   # TODO: comment these three in production mode
   resources :users
   resources :dictionaries
@@ -33,9 +35,11 @@ TranslateApp::Application.routes.draw do
   match '/show_user_annotations', to: 'annotations#show_user_annotations', via: [:get, :post]
   match '/show_user_annotated_urls', to: 'annotations#show_user_urls', via: [:get, :post]
   match '/show_most_annotated_urls', to: 'articles#show_most_annotated_urls', via: [:get, :post]
-  match '/vote_annotation', to: 'annotations#vote', via: [:get, :post]
-  
+
   match '/show_learn_words', to: 'learnings#show_learn_words', via: :post
+  
+  match '/vote', to: 'feedbacks#vote', via: [:get, :post]
+
   
   
   match '/get_user_id_by_user_name', to: 'users#get_id_by_username', via: :get

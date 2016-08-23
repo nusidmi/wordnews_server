@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160822093517) do
+ActiveRecord::Schema.define(:version => 20160823075638) do
 
   create_table "annotation_histories", :force => true do |t|
     t.integer  "user_id"
@@ -251,10 +251,11 @@ ActiveRecord::Schema.define(:version => 20160822093517) do
 
   create_table "vote_histories", :force => true do |t|
     t.integer  "user_id"
-    t.integer  "annotation_id"
-    t.integer  "vote",          :default => 0
-    t.datetime "created_at",                   :null => false
-    t.datetime "updated_at",                   :null => false
+    t.integer  "pair_id"
+    t.integer  "vote",       :default => 0
+    t.datetime "created_at",                :null => false
+    t.datetime "updated_at",                :null => false
+    t.integer  "source"
   end
 
   create_table "word_categories", :force => true do |t|

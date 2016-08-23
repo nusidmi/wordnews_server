@@ -1,5 +1,4 @@
 class VoteHistory < ActiveRecord::Base
-  attr_accessible :annotation_id, :user_id, :vote
-  belongs_to :annotation
+  attr_accessible :pair_id, :source, :user_id, :vote
   belongs_to :user
 end

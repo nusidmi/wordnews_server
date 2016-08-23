@@ -284,22 +284,4 @@ class LearningsController < ApplicationController
     
   end
   
-  
-  # TODO
-  # Vote machine translation
-  def vote
-    if !params[:machine_translation_id].present? or !params[:user_id].present? or 
-      !params[:score] or !ValidationHandler.validate_integer(params[:score])
-      respond_to do |format|
-        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
-                        status: :bad_request }
-      end
-      return
-    end
-    
-    
-    
-    
-  end
-  
 end

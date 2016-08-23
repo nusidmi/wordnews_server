@@ -1,0 +1,21 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+one:
+  text: MyString
+  translation: MyString
+  lang: MyString
+  translator: MyString
+  article_id: 1
+  paragraph_idx: 1
+  text_idx: 1
+  vote: 1
+
+two:
+  text: MyString
+  translation: MyString
+  lang: MyString
+  translator: MyString
+  article_id: 1
+  paragraph_idx: 1
+  text_idx: 1
+  vote: 1
