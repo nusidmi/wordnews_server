@@ -16,9 +16,12 @@ class Utilities::Paragraph
       return []     
     end
     
+    # TODO:　Psych::SyntaxError ((<unknown>): mapping values are not allowed in this context at line 2 column 52):
+    #print sentences_str
     sentence_list = YAML.load(sentences_str)
     sentence_list.each_with_index do |sentence_text, sentence_index|
       word_tag_str = `python "./public/text_processing.py" pos_tagger "#{sentence_text}"`
+      #puts word_tag_str
       if word_tag_str!='ERROR'
         s = Utilities::Sentence.new(sentence_text, word_tag_str, @index, sentence_index)
         @sentences.push(s)
@@ -43,6 +46,6 @@ class Utilities::Paragraph
   end
   
   
-  attr_reader :index
+  attr_reader :index, :text
 
 end

@@ -85,11 +85,15 @@ class ArticlesController < ApplicationController
   
   
   # from_date and to_date are optional (both provided or both omitted)
+  # TODO: html shows error msg properly
   def show_most_annotated_urls
     if !params[:lang].present?  or !params[:num].present?  \
         or !ValidationHandler.validate_integer(params[:num]) \
         or params[:from_date].present?^params[:to_date].present?
+        
       respond_to do |format|
+        format.html { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request}
         format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request}
       end
@@ -103,6 +107,8 @@ class ArticlesController < ApplicationController
     
       if !ValidationHandler.validate_date(@from_date) or !ValidationHandler.validate_date(@to_date)
         respond_to do |format|
+          format.html { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request}
           format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request}
         end

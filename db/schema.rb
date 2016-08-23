@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160819082340) do
+ActiveRecord::Schema.define(:version => 20160822093517) do
 
   create_table "annotation_histories", :force => true do |t|
     t.integer  "user_id"
@@ -174,6 +174,19 @@ ActiveRecord::Schema.define(:version => 20160819082340) do
     t.datetime "created_at",          :null => false
     t.datetime "updated_at",          :null => false
     t.string   "lang"
+  end
+
+  create_table "machine_translations", :force => true do |t|
+    t.string   "text"
+    t.string   "translation"
+    t.string   "lang"
+    t.string   "translator"
+    t.integer  "article_id"
+    t.integer  "paragraph_idx"
+    t.integer  "text_idx"
+    t.integer  "vote"
+    t.datetime "created_at",    :null => false
+    t.datetime "updated_at",    :null => false
   end
 
   create_table "meanings", :force => true do |t|

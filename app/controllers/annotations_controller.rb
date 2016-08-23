@@ -35,7 +35,7 @@ class AnnotationsController < ApplicationController
     end
     
     # obtain the article id
-    article_id = get_article_id(params[:url_postfix], params[:lang])
+    article_id = Utilities::ArticleUtil.get_article_id(params[:url_postfix], params[:lang])
     
     #@annotations = article_id.nil? ? {}: Annotation.where('user_id=? AND article_id=?', params[:user_id], article_id)
     
@@ -58,7 +58,7 @@ class AnnotationsController < ApplicationController
       return
     end
     
-    article_id = get_article_id(params[:url_postfix], params[:lang])
+    article_id = Utilities::ArticleUtil.get_article_id(params[:url_postfix], params[:lang])
     @annotations = article_id.nil? ? {} : Annotation.where('article_id=?', article_id)
     
     respond_to do |format|
@@ -227,7 +227,7 @@ class AnnotationsController < ApplicationController
     end
         
     # Obtain article or create if not exists
-    article = get_or_create_article(
+    article = Utilities::ArticleUtil.get_or_create_article(
       params[:annotation][:url], params[:annotation][:url_postfix],
       params[:annotation][:lang], params[:annotation][:website], 
       params[:annotation][:title], params[:annotation][:publication_date])
@@ -406,8 +406,9 @@ class AnnotationsController < ApplicationController
   # TODO: update user table
   # Do not update any table if user has voted the same annotation before
   def vote
-    if !params[:annotation_id].present? or !params[:user_id] or !params[:score] or !ValidationHandler.validate_integer(params[:score])
-       respond_to do |format|
+    if !params[:annotation_id].present? or !params[:user_id] or 
+      !params[:score].present? or !ValidationHandler.validate_integer(params[:score])
+      respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
                         status: :bad_request }
       end
@@ -449,30 +450,6 @@ class AnnotationsController < ApplicationController
                       status: :ok}
       end
     end
-  end
-  
-    
-  def get_or_create_article(url, url_postfix, lang, website, title, publication_date)
-    article = Article.where('url_postfix=? AND lang=?', url_postfix, lang).first
-
-    if article.nil?
-      article = Article.new(website: website, url: url, url_postfix: url_postfix, 
-                            lang: lang, annotation_count: 0, title: title, 
-                            publication_date: publication_date)
-      article.save
-    end
-    return article
-  end
-  
-  
-  def get_article(url_postfix, lang)
-    article = Article.where('url_postfix=? AND lang=?', url_postfix, lang).first
-    return article
-  end
-  
-  def get_article_id(url_postfix, lang)
-    article_id = Article.where('url_postfix=? AND lang=?', url_postfix, lang).pluck(:id).first
-    return article_id
   end
   
   

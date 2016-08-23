@@ -13,6 +13,9 @@ nltk.data.path.append('./public/MCQ Generation/nltk_data')
 
 
 def sentence_segmenter(text):
+    
+    #text = text.decode('utf-8').replace("\n", " ")
+    text = text.replace("\n", " ")
     sent_tokenize_list = nltk.sent_tokenize(text)
     return sent_tokenize_list
 

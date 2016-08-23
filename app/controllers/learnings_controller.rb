@@ -3,38 +3,59 @@
 require 'json'
 require 'set'
 
-class LearningController < ApplicationController
+class LearningsController < ApplicationController
 
   # Params: lang, text in the paragraph, and paragraph index
   # Return: {[word, translation, paragraph_index, word_index]
   def show_learn_words
+    if !params[:lang].present? or !params[:translator].present? or 
+      !params[:num_of_words].present? or !params[:user_id].present? or
+      !params[:url_postfix].present?
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return
+    end
+      
     lang = params[:lang]
     translator = params[:translator]
     num_of_words = params[:num_of_words].to_i
     user_id = params[:user_id]
     url_postfix = params[:url_postfix]
+    url = params[:url]
+    website = params[:website]
+    title = params[:title]
+    publication_date = params[:publication_date]
 
     # pre-process text
     @sentences = []
     @paragraphs = {} # idx: Paragraph
     
     params[:paragraphs].each do |idx, paragraph|
-      p = Utilities::Paragraph.new(paragraph[:paragraph_index], paragraph[:text])
-      s = p.process_text()
-      @sentences += s
-      @paragraphs[p.index] = p
+      if !paragraph[:text].nil? and !paragraph[:text].blank?
+        p = Utilities::Paragraph.new(paragraph[:paragraph_index], paragraph[:text])
+        #puts p.index.to_s + ' ' + p.text
+        s = p.process_text()
+        if !s.nil? and s.any?
+          @sentences += s
+          @paragraphs[p.index] = p
+        end
+      end
     end 
     
-    @words_to_learn = select_learn_words(num_of_words, user_id, lang, translator)
-    get_annotations(url_postfix, lang)
+    article_id = Utilities::ArticleUtil.get_or_create_article(url, url_postfix, lang, website, title, publication_date)
+    @words_to_learn = select_learn_words(num_of_words, user_id, lang, translator, article_id)
+    
+    get_annotations(article_id, lang)
     puts '@words_to_learn size ' + @words_to_learn.size().to_s
     
     # response
-    
     respond_to do |format|
       format.json { render json: { msg: Utilities::Message::MSG_OK, words_to_learn: @words_to_learn}, 
                     status: :ok }
     end
+    
   end
   
   
@@ -43,7 +64,7 @@ class LearningController < ApplicationController
   # 3. no duplicate words
   # 4. omit word in phrased annotations (TODO)
   # 5. consider word difficulty level and user's knowledge level (TODO)
-  def select_learn_words(num_of_words, user_id, lang, translator)
+  def select_learn_words(num_of_words, user_id, lang, translator, article_id)
     @sentences.shuffle!
     words_to_learn = []
     word_set = Set.new
@@ -62,22 +83,29 @@ class LearningController < ApplicationController
         end
         
         word_pos = sentence.tags[index]
-        if !word_set.include?(word_text) and Utilities::Text.is_proper_to_learn(word_text, word_pos)
+        if !word_text.nil? and !word_set.include?(word_text) and Utilities::Text.is_proper_to_learn(word_text, word_pos)
           word_id = get_word_id(word_text, Utilities::Lang::CODE[:English])
-          
+
           if !word_id.nil?
+            puts word_text + ' ' + word_id.to_s
+
             word_index = @paragraphs[sentence.paragraph_index].get_word_occurence_index(word_text, 
             sentence.sentence_index, index)
             word = Utilities::Word.new(word_text, sentence.paragraph_index, sentence.sentence_index, word_index, 
-                                    word_id)
+                                    word_id, word_pos)
                                     
-            # get translation
-            word.translation = translate(word_text, word_id, word_pos, sentence, lang, translator)
-            word.translation_id = get_word_id(word.translation, lang) 
-            
+            # get translation result[id, translation]
+            result = translate(word, sentence, lang, translator, article_id)
+            if !result.nil? and result.any?
+              word.machine_translation_id = result[0]
+              word.translation = result[1]
+              word.translation_id = get_word_id(word.translation, lang) 
+            end
+
             if !word.translation.nil? and !word.translation_id.nil?
               word.pair_id = get_translation_pair_id(word.word_id, word.translation_id, lang)
               word.learn_type = get_learn_type(user_id, word.pair_id, lang) # view/test/skip
+              word.pronunciation = get_pronunciation_by_word_id(word.translation_id, lang)
               
               if word.learn_type!='skip' and !word.pair_id.nil?
                 if word.learn_type=='test'
@@ -101,27 +129,45 @@ class LearningController < ApplicationController
   end
   
   # Return at most ANNOTATION_COUNT_MAX top voted annotations
-  # TODO: database index
-  def get_annotations(url_postfix, lang)
-    article_id = Article.where('url_postfix=? AND lang=?', url_postfix, lang).pluck(:id).first
-    
+  # TODO: pronunciation provided by user?
+  def get_annotations(article_id, lang)
     @words_to_learn.each do |word|
       if word.learn_type=='view'
         word.annotations = Annotation.where('article_id=? AND paragraph_idx=? AND text_idx=? AND selected_text=?',
-            article_id, word.paragraph_index, word.word_index, word.text).order('vote desc').limit(ANNOTATION_COUNT_MAX)
+            article_id, word.paragraph_index, word.word_index, word.text).order('vote desc').limit(ANNOTATION_COUNT_MAX).pluck_all(:id, :translation)
+        word.annotations.each do |annotation|
+          annotation.pronunciation = get_pronunciation_by_word(annotation.translation, lang)
+        end
       end
     end
   end
   
   
-  def translate(word_text, word_id, word_pos, sentence, lang, translator)
-    if translator == 'dict'
-      return translate_by_dictionary(word_id, word_pos, lang)
-    elsif translator == 'ims'
-      return translate_by_ims(word_text, sentence, lang)
-    elsif translator == 'bing'
-      return translate_by_bing(word_text, sentence, lang)
+  # First retrieve the translation from database. If not exits, request translator and save
+  def translate(word, sentence, lang, translator, article_id)
+    result = MachineTranslation.where(article_id: article_id, paragraph_idx: word.paragraph_index,
+          text_idx: word.word_index, translator: translator, lang: lang).pluck_all(:id, :translation).first
+          
+    if result.nil?
+      if translator == 'dict'
+        translation = translate_by_dictionary(word.word_id, word.pos_tag, lang)
+      elsif translator == 'ims'
+        translation translate_by_ims(word.text, sentence, lang)
+      elsif translator == 'bing'
+        translation = translate_by_bing(word.text, sentence, lang)
+      end
+      
+      # save 
+      if !translation.nil?
+        mt = MachineTranslation.new(text:word.text, translation: translation,
+          article_id:article_id, paragraph_idx: word.paragraph_index, text_idx: word.word_index, 
+          translator: translator, lang:lang, vote: 0)
+        mt.save
+        result = [mt.id, translation]
+      end
     end
+    
+    return result
   end
   
   
@@ -138,11 +184,13 @@ class LearningController < ApplicationController
   
   
   # TODO
-  def translate_by_bing
+  def translate_by_bing(word_text, sentence, lang)
+    
+    
   end
   
   # TODO
-  def translate_by_ims
+  def translate_by_ims(word_text, sentence, lang)
     
   end
 
@@ -184,6 +232,25 @@ class LearningController < ApplicationController
   end
   
   
+  def get_pronunciation_by_word_id(word_id, lang)
+    if !word_id.nil?
+      if lang==Utilities::Lang::CODE[:Chinese]
+        return ChineseVocabulary.where(id: word_id).pluck(:pronunciation).first
+      end
+    end
+  end
+  
+  
+  def get_pronunciation_by_word(word, lang)
+    if !word.nil?
+      if lang==Utilities::Lang::CODE[:Chinese]
+        return ChineseVocabulary.where(text: word).pluck(:pronunciation).first
+      end
+    end
+  end
+  
+    
+  
   def generate_quiz(word, lang)
     if lang==Utilities::Lang::CODE[:Chinese]
       return generate_quiz_chinese(word.text)
@@ -203,17 +270,35 @@ class LearningController < ApplicationController
       distractors = distractors_str.split(',')
       quiz = Hash.new
       
-      quiz[word_under_test] = Hash.new
-      quiz[word_under_test]['isTest'] = 1 # TODO rename isTest to testType
-      quiz[word_under_test]['choices'] = Hash.new
+      quiz= Hash.new
+      quiz['testType'] = 
+      quiz['choices'] = Hash.new
   
       distractors.each_with_index { |val, idx|
-        quiz[word_under_test]['choices'][idx.to_s] = val.strip
+        quiz['choices'][idx.to_s] = val.strip
       }
       return quiz
     rescue Exception => e
       Rails.logger.warn "MCQGenerator.py: Error e.msg=>[" + e.message + "]"
     end
+    
+  end
+  
+  
+  # TODO
+  # Vote machine translation
+  def vote
+    if !params[:machine_translation_id].present? or !params[:user_id].present? or 
+      !params[:score] or !ValidationHandler.validate_integer(params[:score])
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                        status: :bad_request }
+      end
+      return
+    end
+    
+    
+    
     
   end
   
