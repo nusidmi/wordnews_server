@@ -3,8 +3,6 @@
 <table class="table table-striped">
   <tr>
     <th>Internal ID</th>
-    <th>User ID</th>
-    <th>Annotation ID</th>
     <th>Selected text</th>
     <th>Translation</th>
     <th>Language</th>
@@ -20,8 +18,6 @@
 <% @annotations.each do |annotation| %>
   <tr>
     <td><%= annotation.id %></td>
-    <td><%= annotation.user_id %></td>
-    <td><%= annotation.ann_id %></td>
     <td><%= annotation.selected_text %></td>
     <td><%= annotation.translation %></td>
     <td><%= annotation.lang %></td>
