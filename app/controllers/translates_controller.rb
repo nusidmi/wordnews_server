@@ -592,6 +592,7 @@ class TranslatesController < ApplicationController
     end
     aligned_positions
   end
+  
 
   def dictionary_translation(user_id, num_words, paragraphs, prioritise_hardcode = false)
     result = Hash.new

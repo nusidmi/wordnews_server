@@ -1,12 +1,18 @@
 require 'yaml'
 
 class Utilities::Paragraph
+#class Paragraph
 
   def initialize (paragraph_index, text)
     @index = paragraph_index
     @text = text
     @sentences = []
   end
+  
+  # def initialize(text, sentences)
+  #   @text = text
+  #   @sentences = sentences
+  # end
     
   # TODO: improve the efficiency
   def process_text()

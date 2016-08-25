@@ -44,7 +44,8 @@ class LearningsController < ApplicationController
       end
     end 
     
-    article_id = Utilities::ArticleUtil.get_or_create_article(url, url_postfix, lang, website, title, publication_date)
+    article = Utilities::ArticleUtil.get_or_create_article(url, url_postfix, lang, website, title, publication_date)
+    article_id = article['id']
     @words_to_learn = select_learn_words(num_of_words, user_id, lang, translator, article_id)
     
     get_annotations(article_id, lang)
@@ -87,16 +88,16 @@ class LearningsController < ApplicationController
           word_id = get_word_id(word_text, Utilities::Lang::CODE[:English])
 
           if !word_id.nil?
-            puts word_text + ' ' + word_id.to_s
-
             word_index = @paragraphs[sentence.paragraph_index].get_word_occurence_index(word_text, 
             sentence.sentence_index, index)
-            word = Utilities::Word.new(word_text, sentence.paragraph_index, sentence.sentence_index, word_index, 
-                                    word_id, word_pos)
+            word_sent_position = sentence.get_word_position(word_text, index)
+            
+            word = Utilities::Word.new(word_text, sentence.paragraph_index, sentence.sentence_index,
+                                      word_index, word_id, word_pos, word_sent_position)
                                     
             # get translation result[id, translation]
             result = translate(word, sentence, lang, translator, article_id)
-            if !result.nil? and result.any?
+            if !result.nil?
               word.machine_translation_id = result[0]
               word.translation = result[1]
               word.translation_id = get_word_id(word.translation, lang) 
@@ -115,6 +116,7 @@ class LearningsController < ApplicationController
                 if !word.quiz.nil? or word.learn_type=='view'                 
                   words_to_learn.push(word)
                   puts word.text
+                  puts word.translation
                   i += 1
                   word_set.add(word_text)
                   select = true
@@ -135,8 +137,10 @@ class LearningsController < ApplicationController
       if word.learn_type=='view'
         word.annotations = Annotation.where('article_id=? AND paragraph_idx=? AND text_idx=? AND selected_text=?',
             article_id, word.paragraph_index, word.word_index, word.text).order('vote desc').limit(ANNOTATION_COUNT_MAX).pluck_all(:id, :translation)
-        word.annotations.each do |annotation|
-          annotation.pronunciation = get_pronunciation_by_word(annotation.translation, lang)
+        if !word.annotations.nil?
+          word.annotations.each do |annotation|
+            annotation['pronunciation'] = get_pronunciation_by_word(annotation['translation'], lang)
+          end
         end
       end
     end
@@ -146,28 +150,28 @@ class LearningsController < ApplicationController
   # First retrieve the translation from database. If not exits, request translator and save
   def translate(word, sentence, lang, translator, article_id)
     result = MachineTranslation.where(article_id: article_id, paragraph_idx: word.paragraph_index,
-          text_idx: word.word_index, translator: translator, lang: lang).pluck_all(:id, :translation).first
-          
-    if result.nil?
-      if translator == 'dict'
-        translation = translate_by_dictionary(word.word_id, word.pos_tag, lang)
-      elsif translator == 'ims'
-        translation translate_by_ims(word.text, sentence, lang)
-      elsif translator == 'bing'
-        translation = translate_by_bing(word.text, sentence, lang)
-      end
+          text_idx: word.word_index, translator: translator, lang: lang, text:word.text).pluck_all(:id, :translation).first
+    
+    if !result.nil?
+      return [result['id'], result['translation']]
+    end
       
-      # save 
-      if !translation.nil?
-        mt = MachineTranslation.new(text:word.text, translation: translation,
-          article_id:article_id, paragraph_idx: word.paragraph_index, text_idx: word.word_index, 
-          translator: translator, lang:lang, vote: 0)
-        mt.save
-        result = [mt.id, translation]
-      end
+    if translator == 'dict'
+      translation = translate_by_dictionary(word.word_id, word.pos_tag, lang)
+    elsif translator == 'ims'
+      translation translate_by_ims(word.text, sentence.text, lang)
+    elsif translator == 'bing'
+      translation = translate_by_bing(word.position, sentence.text, lang)
     end
     
-    return result
+    # save 
+    if !translation.nil?
+      mt = MachineTranslation.new(text:word.text, translation: translation,
+        article_id:article_id, paragraph_idx: word.paragraph_index, text_idx: word.word_index, 
+        translator: translator, lang:lang, vote: 0)
+      mt.save
+      return [mt.id, translation]
+    end
   end
   
   
@@ -183,10 +187,13 @@ class LearningsController < ApplicationController
   end
   
   
-  # TODO
-  def translate_by_bing(word_text, sentence, lang)
-    
-    
+  # English -> Chinese
+  # word_position is [start_character_index, end_character_index] for the word in sentence
+  def translate_by_bing(word_position, sentence, lang)
+    if lang==Utilities::Lang::CODE[:Chinese]
+      translation = Bing.translate_word(word_position, sentence, 'en', 'zh-CHS')
+      return translation
+    end
   end
   
   # TODO
