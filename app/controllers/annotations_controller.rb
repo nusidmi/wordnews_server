@@ -33,13 +33,16 @@ class AnnotationsController < ApplicationController
       end
       return
     end
-    
+
+    user = User.where(:public_key => params[:user_id]).first
+    user_id = user.id
+
     # obtain the article id
     article_id = Utilities::ArticleUtil.get_article_id(params[:url_postfix], params[:lang])
     
-    #@annotations = article_id.nil? ? {}: Annotation.where('user_id=? AND article_id=?', params[:user_id], article_id)
+    #@annotations = article_id.nil? ? {}: Annotation.where('user_id=? AND article_id=?', user_id, article_id)
     
-    @annotations = article_id.nil? ? {}: Annotation.joins(:annotation_histories).where('annotation_histories.user_id=? AND article_id=?', params[:user_id], article_id)
+    @annotations = article_id.nil? ? {}: Annotation.joins(:annotation_histories).where('annotation_histories.user_id=? AND article_id=?', user_id, article_id)
      
       
     respond_to do |format|
@@ -97,13 +100,16 @@ class AnnotationsController < ApplicationController
       end
       return
     end
-    
+
+    user = User.where(:public_key => params[:user_id]).first
+    user_id = user.id
+
     if params[:lang].present?
-      total_annotation = AnnotationHistory.where(user_id: params[:user_id], lang: params[:lang]).count('id')
-      total_url = AnnotationHistory.where(user_id: params[:user_id], lang: params[:lang]).joins(:annotation).count('article_id', distinct: true)
+      total_annotation = AnnotationHistory.where(user_id: user_id, lang: params[:lang]).count('id')
+      total_url = AnnotationHistory.where(user_id: user_id, lang: params[:lang]).joins(:annotation).count('article_id', distinct: true)
     else
-      total_annotation = AnnotationHistory.where(user_id: params[:user_id]).count('id')
-      total_url = AnnotationHistory.where(user_id: params[:user_id]).joins(:annotation).count('article_id', distinct: true)
+      total_annotation = AnnotationHistory.where(user_id: user_id).count('id')
+      total_url = AnnotationHistory.where(user_id: user_id).joins(:annotation).count('article_id', distinct: true)
     end
     
     respond_to do |format|
@@ -124,9 +130,9 @@ class AnnotationsController < ApplicationController
       end
       return
     end
-    
+
     # invalid ID
-    @user = User.find_by_id(params[:user_id])
+    @user = User.where(:public_key => params[:user_id]).first
     if @user.nil?
       respond_to do |format|
         format.json { render json: {msg: Utilities::Message::MSG_NOT_FOUND}, 
@@ -136,9 +142,9 @@ class AnnotationsController < ApplicationController
     end
       
     if params[:lang].present?
-      @annotations = Annotation.where('annotations.lang=?', params[:lang]).joins(:annotation_histories).where('user_id=?', params[:user_id])
+      @annotations = Annotation.where('annotations.lang=?', params[:lang]).joins(:annotation_histories).where('user_id=?', @user.id)
     else
-      @annotations = Annotation.joins(:annotation_histories).where('user_id=?', params[:user_id])
+      @annotations = Annotation.joins(:annotation_histories).where('user_id=?', @user.id)
     end
     respond_to do |format|
       format.html # show_user_annotations.html.erb
@@ -160,7 +166,7 @@ class AnnotationsController < ApplicationController
       return
     end
 
-    @user = User.find_by_id(params[:user_id])
+    @user = User.where(:public_key => params[:user_id]).first
     if @user.nil?
       respond_to do |format|
         format.json { render json: {msg: Utilities::Message::MSG_NOT_FOUND}, 
@@ -169,13 +175,13 @@ class AnnotationsController < ApplicationController
       return
     end
     
-    #@annotations = article_id.nil? ? {}: Annotation.joins(:annotation_histories).where('annotation_histories.user_id=? AND article_id=?', params[:user_id], article_id)
+    #@annotations = article_id.nil? ? {}: Annotation.joins(:annotation_histories).where('annotation_histories.user_id=? AND article_id=?', @user.id, article_id)
 
 
     if params[:lang].present?
-      @article = Article.joins(:annotation_histories, :annotations).where('user_id=? and lang=?', params[:user_id], params[:lang]).uniq
+      @article = Article.joins(:annotation_histories, :annotations).where('user_id=? and lang=?', @user.id, params[:lang]).uniq
     else
-      @article = Article.joins(:annotation_histories, :annotations).where('user_id=?', params[:user_id]).uniq
+      @article = Article.joins(:annotation_histories, :annotations).where('user_id=?', @user.id).uniq
     end
     respond_to do |format|
       format.html # show_user_annotations.html.erb
@@ -225,7 +231,9 @@ class AnnotationsController < ApplicationController
       end
       return
     end
-        
+
+    @user = User.where(:public_key => params[:annotation][:user_id]).first
+
     # Obtain article or create if not exists
     article = Utilities::ArticleUtil.get_or_create_article(
       params[:annotation][:url], params[:annotation][:url_postfix],
@@ -243,7 +251,7 @@ class AnnotationsController < ApplicationController
       
     @annotation = Annotation.where(
       #ann_id: params[:annotation][:ann_id], 
-      #user_id: params[:annotation][:user_id],
+      #user_id: @user.id,
       selected_text: params[:annotation][:selected_text],
       translation: params[:annotation][:translation],
       lang: params[:annotation][:lang],
@@ -264,7 +272,7 @@ class AnnotationsController < ApplicationController
     
     @annotation_history = AnnotationHistory.new(
       client_ann_id: params[:annotation][:ann_id], 
-      user_id: params[:annotation][:user_id],
+      user_id: @user.id,
       lang: params[:annotation][:lang])
       
     Annotation.transaction do
@@ -303,16 +311,18 @@ class AnnotationsController < ApplicationController
   
   
   def update_translation
-    if !params[:id].present? or !params[:translation].present? or !params[:user_id]
+    if !params[:id].present? or !params[:translation].present? or !params[:user_id].present?
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA }, 
                       status: :bad_request } 
       end
       return
     end
-    
+
+    @user = User.where(:public_key => params[:user_id]).first
+
     @annotation = Annotation.find_by_id(params[:id])
-    @user_history = AnnotationHistory.where(annotation_id: params[:id], user_id: params[:user_id])
+    @user_history = AnnotationHistory.where(annotation_id: params[:id], user_id: @user.id)
 
     if @annotation.nil? or @user_history.nil?
       respond_to do |format|
@@ -355,16 +365,17 @@ class AnnotationsController < ApplicationController
   # DELETE /annotations/1
   # DELETE /annotations/1.json
   def destroy
-    if !params[:id].present? or !params[:user_id]
+    if !params[:id].present? or !params[:user_id].present?
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
                         status: :bad_request }
       end
       return
     end
-      
+
+    @user = User.where(:public_key => params[:user_id]).first
     @annotation = Annotation.find_by_id(params[:id])
-    @user_history = AnnotationHistory.where(annotation_id: params[:id], user_id: params[:user_id])
+    @user_history = AnnotationHistory.where(annotation_id: params[:id], user_id: @user.id)
 
     if @annotation.nil? or @user_history.nil?
       respond_to do |format|

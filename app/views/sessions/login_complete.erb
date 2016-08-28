@@ -1,0 +1,7 @@
+<% provide(:title, 'Login Complete') %>
+<% if logged_in? %>
+    <h1>Welcome Back <%= @current_user.user_name %>!</h1>
+<% else %>
+    <li><%= link_to "Log in", login_path %></li>
+<% end %>
+

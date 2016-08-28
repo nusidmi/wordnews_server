@@ -17,6 +17,23 @@ MAX_USER_CREATE_RETRIES                 = 5.freeze
 
 USER_ID_CREATE_MIN                      = 10000.freeze
 USER_ID_CREATE_MAX                      = 2000000000.freeze
+USER_START_SCORE                        = 0.freeze
+
+USER_ROLE_ADMIN                         = 1.freeze
+USER_ROLE_LEARNER                       = 2.freeze
+USER_ROLE_ANNOTATOR                     = 3.freeze
+
+USER_START_RANK                         = 1.freeze
+
+USER_STATUS_NOT_BLOCKED                 = 1.freeze
+USER_STATUS_BLOCKED                     = 0.freeze
+
+USER_START_TRANSLATE_COUNT              = 0.freeze
+USER_START_ANNOTATION_COUNT             = 0.freeze
+
+USER_NAME_MAX_LENGTH                    = 255.freeze
+USER_EMAIL_MAX_LENGTH                   = 255.freeze
+
 
 POS_INDEX                               = {'NN'=>1, 'VB'=>2, 'RB'=>4, 'JJ'=>5}
 ANNOTATION_COUNT_MAX                    = 5.freeze

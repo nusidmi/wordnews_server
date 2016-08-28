@@ -1,3 +1,5 @@
+require 'bcrypt'
+
 class UsersController < ApplicationController
   #include UserHandler
   
@@ -23,46 +25,6 @@ class UsersController < ApplicationController
     end
   end
 
-  def get_if_translate
-    # @user_name = params[:name]
-    #
-    # @user = User.where(:user_name => @user_name).first
-    # if @user.blank? #no user
-    #   Utilities::UserHandler::make_user @user_name
-    #   @user = User.where(:user_name => @user_name).first
-    # end
-    #
-    # @ifTranslate = @user.if_translate
-    # @result = Hash.new
-    # @result['if_translate'] = @ifTranslate
-    #
-    # respond_to do |format|
-    #   format.html { render :layout => false }
-    # end
-
-    user_name = params[:name]
-
-    result = Hash.new
-    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
-
-    # Validate userID
-    if !UserHandler.validate_userID( user_name )
-      result['msg'] = Utilities::Message::MSG_INVALID_PARA
-      return render json: result, status: :bad_request
-    end
-
-    @user = User.where(:user_name => user_name).first
-    if @user.nil?
-      Rails.logger.warn "get_if_translate: User[" + user_name.to_s + "] not found"
-      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
-      return render json: result, status: :bad_request
-    end
-
-    result['if_translate'] = @user.if_translate
-    result['msg'] = Utilities::Message::MSG_OK
-    return render json: result
-  end
-
   # What is this for?
   def get_suggest_url
     result = Hash.new
@@ -75,48 +37,20 @@ class UsersController < ApplicationController
 
   # TODO: receive language as a parameter
   def display_history
-    # @user_name = params[:name]
-    # @user = User.where(:user_name => @user_name).first
-    # if @user.blank? #no user
-    #   Utilities::UserHandler::make_user @user_name
-    #   @user = User.where(:user_name => @user_name).first
-    # end
-    #
-    # find_to_learn_query = 'user_id = ' + @user.id.to_s + ' and frequency = 0'
-    # find_learnt_query = 'user_id = ' + @user.id.to_s + ' and frequency > 0'
-    # meaning_to_learn_List = History.all(:select => 'meaning_id', :conditions => [find_to_learn_query])
-    # @words_to_learn = []
-    # if meaning_to_learn_List.length !=0
-    #   for meaning in meaning_to_learn_List
-    #     temp = Meaning.find(meaning.meaning_id)
-    #     @words_to_learn.push(temp)
-    #   end
-    # end
-    #
-    # meaning_learnt_list = History.all(:select => 'meaning_id', :conditions => [find_learnt_query])
-    # @words_learnt = []
-    # if meaning_learnt_list.length !=0
-    #   meaning_learnt_list.each do |meaning|
-    #     temp = ChineseWords.joins(:english_words)
-    #             .select('english_meaning, chinese_meaning, meanings.id, english_words_id, chinese_words_id, pronunciation')
-    #     .where('meanings.id = ?', meaning.meaning_id).first
-    #     @words_learnt.push(temp)
-    #   end
-    # end
 
-    user_name = params[:name]
+    public_key = params[:user_id]
     @user = nil
     @msg = Utilities::Message::MSG_GENERAL_FAILURE
     # Validate userID
-    if !UserHandler.validate_userID( user_name )
+    if !UserHandler.validate_public_key( public_key )
       @msg = Utilities::Message::MSG_INVALID_PARA
       return render status: :bad_request
 
     end
 
-    @user = User.where(:user_name => user_name).first
+    @user = User.where(:public_key => public_key).first
     if @user.nil?
-      Rails.logger.warn "display_history: User[" + user_name.to_s + "] not found"
+      Rails.logger.warn "display_history: User[" + public_key.to_s + "] not found"
       @msg = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
       return render status: :bad_request
     end
@@ -152,27 +86,19 @@ class UsersController < ApplicationController
   end
 
   def settings
-    # @user_name = params[:name]
-    # @find_user_query = "user_name = '" + @user_name+"'"
-    # @user = User.find(:first, :conditions => [ @find_user_query ])
-    #
-    # respond_to do |format|
-    #   format.html #{ render :layout => false }# displayHistory.html.erb
-    #   format.json { render json: @user }
-    # end
 
-    user_name = params[:name]
+    public_key = params[:user_id]
     @user = nil
     @msg = Utilities::Message::MSG_GENERAL_FAILURE
     # Validate userID
-    if !UserHandler.validate_userID( user_name )
+    if !UserHandler.validate_public_key( public_key )
       @msg = Utilities::Message::MSG_INVALID_PARA
       return render status: :bad_request
     end
 
-    @user = User.where(:user_name => user_name).first
+    @user = User.where(:public_key => public_key).first
     if @user.nil?
-      Rails.logger.warn "settings: User[" + user_name.to_s + "] not found"
+      Rails.logger.warn "settings: User[" + public_key.to_s + "] not found"
       @msg = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
       return render status: :bad_request
     end
@@ -246,20 +172,20 @@ class UsersController < ApplicationController
   # TODO think about deprecating this.
   def log
 
-    user_name = params[:name]
+    public_key = params[:user_id]
     @user = nil
     result = Hash.new
     result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
 
     # Validate userID
-    if !UserHandler.validate_userID( user_name )
+    if !UserHandler.validate_public_key( public_key )
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
       return render json: result, status: :bad_request
     end
 
-    @user = User.where(:user_name => user_name).first
+    @user = User.where(:public_key => public_key).first
     if @user.nil?
-      Rails.logger.warn "settings: User[" + user_name.to_s + "] not found"
+      Rails.logger.warn "settings: User[" + public_key.to_s + "] not found"
       result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
       return render json: result, status: :bad_request
     end
@@ -268,7 +194,7 @@ class UsersController < ApplicationController
     @move = params[:move]
 
     #puts "Log: User " + @user.id.to_s + ":" + @time_elapsed.to_s + ":" + @move.to_s
-    USER_ACTION_LOGGER.info( "Log: User[" + user_name + "], Elasped_t:" + @time_elapsed.to_s + ", Action:" + @move.to_s )
+    USER_ACTION_LOGGER.info( "Log: User[" + public_key.to_s + "], Elasped_t:" + @time_elapsed.to_s + ", Action:" + @move.to_s )
 
     result['msg'] = Utilities::Message::MSG_OK
     return render json: result
@@ -288,36 +214,130 @@ class UsersController < ApplicationController
   end
 
 
- 
-  # This is a temporal solution to obtain user id, and partially duplicate with /getNumber
-  # TODO: refine user account management
-  def get_id_by_username
-    if !params[:user_name].present?
-       respond_to do |format|
-        format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA },
-                      status: :bad_request}
+
+  def create_new_user
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
+
+    user = UserHandler.create_new_user()
+    if !user.nil?
+      result['user_id'] = user.public_key.to_i
+      result['msg'] =  Utilities::Message::MSG_OK
+    else
+      result['msg'] =  Utilities::Message::MSG_CREATE_FAILURE
+      return render json: result, status: :internal_server_error
+    end
+
+    render json: result
+  end
+
+  def sign_up_new_user
+    if request.get?
+      public_key = params[:user_id]
+
+      @user = User.new()
+      if !UserHandler.validate_public_key( public_key )
+        flash[:error] = Utilities::Message::MSG_INVALID_PARA
+        return
       end
-      return
-    end
-    
-    @user_name = params[:user_name]
-    user = User.where(:user_name => @user_name).first
-    if user.blank? #no user
-      newUser = User.new
-      newUser.user_name = @user_name
-      newUser.if_translate = 1
-      newUser.translate_categories = '1,2,3,4' # the default will be translate all # TODO what does this do?
-      newUser.save
-      user = newUser
-    end
-    puts user.id
-    
-    respond_to do |format|
-      format.json { render json: {user_id: user.id, msg: Utilities::Message::MSG_OK },
-                    status: :ok}
+
+      user_check = User.where(:public_key => public_key).first
+      if user_check.nil?
+        Rails.logger.warn "sign_up_new_user: User[" + public_key.to_s + "] not found"
+        flash[:error] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
+        return
+      end
+
+      @user.public_key = public_key
+    else
+      user_param = params[:user]
+      public_key = user_param[:public_key]
+
+      @user = User.new()
+      if !UserHandler.validate_public_key( public_key )
+        flash[:error] = Utilities::Message::MSG_INVALID_PARA
+        redirect_to :action => "sign_up_new_user", :user_id => public_key
+        return
+      end
+
+      user_check = User.where(:public_key => public_key).first
+      if user_check.nil?
+        Rails.logger.debug "sign_up_new_user Post: User[" + public_key.to_s + "] not found"
+        flash[:error] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
+        redirect_to :action => "sign_up_new_user", :user_id => public_key
+        return
+      end
+
+      if ( !user_param[:user_name].present? || !user_param[:email].present? \
+          || !user_param[:password].present? || !user_param[:password_confirmation].present? )
+        Rails.logger.debug "sign_up_new_user Post: User[" + public_key.to_s + "] missing parameters"
+        flash[:error] = Utilities::Message::MSG_MISSING_SIGN_UP_PARAMS
+        redirect_to :action => "sign_up_new_user", :user_id => public_key
+        return
+      end
+
+      # Test user_name length
+      if user_param[:user_name].to_s.length > USER_NAME_MAX_LENGTH
+        Rails.logger.debug "sign_up_new_user Post: User[" + public_key.to_s + "] Name;[" + user_param[:user_name].to_s + "] exceed name length"
+        flash[:error] = Utilities::Message::MSG_USER_NAME_MAX_LENGTH
+        redirect_to :action => "sign_up_new_user", :user_id => public_key
+        return
+      end
+
+      # Email test
+      if !ValidationHandler.validate_email(user_param[:email])
+        Rails.logger.debug "sign_up_new_user Post: User[" + public_key.to_s + "] Email:[" + user_param[:email].to_s + "] Invalid"
+        flash[:error] = Utilities::Message::MSG_INVALID_EMAIL
+        redirect_to :action => "sign_up_new_user", :user_id => public_key
+        return
+      end
+
+      # Test email length
+      if user_param[:email].to_s.length > USER_EMAIL_MAX_LENGTH
+        Rails.logger.debug "sign_up_new_user Post: User[" + public_key.to_s + "] Email:[" + user_param[:email].to_s + "] exceed max length"
+        flash[:error] = Utilities::Message::MSG_EMAIL_MAX_LENGTH
+        redirect_to :action => "sign_up_new_user", :user_id => public_key
+        return
+      end
+
+      # store email as lowercase!!!!!!!!!!!
+      input_email = user_param[:email].to_s.downcase
+
+      # Test unique email. Use lowercased email!!!
+      user_email_test = User.where(:email => input_email).first
+      if !user_email_test.nil?
+        Rails.logger.debug "sign_up_new_user Post: User[" + public_key.to_s + "] Email:[" + user_param[:email].to_s + "] already registered"
+        flash[:error] = Utilities::Message::MSG_EMAIL_DUPLICATE
+        redirect_to :action => "sign_up_new_user", :user_id => public_key
+        return
+      end
+
+      # Test if password and password_confirmation is same
+      if user_param[:password] != user_param[:password_confirmation]
+        Rails.logger.debug "sign_up_new_user Post: User[" + public_key.to_s + "] Password is not same"
+        flash[:error] = Utilities::Message::MSG_PASSWORD_IS_NOT_SAME
+        redirect_to :action => "sign_up_new_user", :user_id => public_key
+        return
+      end
+
+      user_check.user_name = user_param[:user_name].to_s
+      user_check.email = input_email
+      user_check.password_digest = BCrypt::Password.create(user_param[:password])
+      user_check.registered_at = Time.now()
+
+      if !user_check.save
+        Rails.logger.debug "sign_up_new_user Post: User[" + public_key.to_s + "] Error saving"
+        flash[:error] = Utilities::Message::MSG_GENERAL_FAILURE
+        redirect_to :action => "sign_up_new_user", :user_id => public_key
+        return
+      end
+
+      log_in user_check
+      redirect_to :action => "sign_up_complete"
     end
   end
 
-
-
+  def sign_up_complete
+  end
 end
+

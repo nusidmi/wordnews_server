@@ -16,7 +16,6 @@ TranslateApp::Application.routes.draw do
   match '/getNumber', to: 'translates#calculate', via: :get
   match '/displayHistory', to: 'users#display_history', via: :get
   match '/settings', to: 'users#settings', via: :get
-  match '/getIfTranslate', to: 'users#get_if_translate', via: :get
   match '/getSuggestURL', to: 'users#get_suggest_url', via: :get
   match '/getExampleSentences', to: 'translates#get_example_sentences', via: :get
   match '/log', to: 'users#log', via: :post
@@ -40,11 +39,19 @@ TranslateApp::Application.routes.draw do
   
   match '/vote', to: 'feedbacks#vote', via: [:get, :post]
 
-  
-  
-  match '/get_user_id_by_user_name', to: 'users#get_id_by_username', via: :get
-  
-  
+
+
+  match '/create_new_user', to: 'users#create_new_user', via: :get
+
+  # User Management
+  match '/sign_up', to: 'users#sign_up_new_user', via: [:get,:post]
+  match '/sign_up_complete', to: 'users#sign_up_complete', via: :get
+  #get "sessions/new"
+  match '/login', to: 'sessions#new', via: :get
+  match '/login', to: 'sessions#create', via: :post
+  match '/login_complete', to: 'sessions#login_complete', via: :get
+  match '/logout', to: 'sessions#logout', via: :get
+
 
   # The priority is based upon order of creation:
   # first created -> highest priority.
