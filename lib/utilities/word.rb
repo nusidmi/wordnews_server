@@ -22,6 +22,6 @@ class Utilities::Word
   
   attr_accessor :text, :paragraph_index, :sentence_index, :word_index, :position,
               :pos_tag, :translation, :pronunciation, :word_id, :translation_id, 
-              :pair_id, :learn_type, :quiz, :annotations, 
+              :pair_id, :vote, :learn_type, :quiz, :annotations, 
               :machine_translation_id # the id in machine_translations table
 end

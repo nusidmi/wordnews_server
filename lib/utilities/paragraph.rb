@@ -23,7 +23,7 @@ class Utilities::Paragraph
     end
     
     # TODO:　Psych::SyntaxError ((<unknown>): mapping values are not allowed in this context at line 2 column 52):
-    #print sentences_str
+    print sentences_str
     sentence_list = YAML.load(sentences_str)
     sentence_list.each_with_index do |sentence_text, sentence_index|
       word_tag_str = `python "./public/text_processing.py" pos_tagger "#{sentence_text}"`

@@ -312,7 +312,7 @@ class AnnotationsController < ApplicationController
     end
     
     @annotation = Annotation.find_by_id(params[:id])
-    @user_history = AnnotationHistory.where(annotation_id: params[:id], user_id: params[:user_id])
+    @user_history = AnnotationHistory.where(annotation_id: params[:id], user_id: params[:user_id]).first
 
     if @annotation.nil? or @user_history.nil?
       respond_to do |format|
@@ -334,7 +334,7 @@ class AnnotationsController < ApplicationController
     user_count = AnnotationHistory.where(annotation_id: params[:id]).count
 
     Annotation.transaction do
-      if (user_count>1 or @annotation.destroy) and @new_annotation.save and @user_history.update_attribute(annotation_id: @new_annotation.id)
+      if (user_count>1 or @annotation.destroy) and @new_annotation.save and @user_history.update_attribute('annotation_id', @new_annotation.id)
         respond_to do |format|
           format.json { render json:{ msg: Utilities::Message::MSG_OK, id: @new_annotation.id}, 
                         status: :ok}

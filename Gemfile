@@ -45,6 +45,9 @@ gem 'newrelic_rpm'
 
 gem "savon", "~> 2.10.0"
 
+gem  "httparty"
+
+
 # ruby NLP
 #gem 'birch', :git=>"https://github.com/faustoct/birch.git"
 #gem 'treat'

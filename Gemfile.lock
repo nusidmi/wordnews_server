@@ -54,6 +54,8 @@ GEM
       builder (>= 2.1.2)
     hike (1.2.3)
     hirb (0.7.3)
+    httparty (0.14.0)
+      multi_xml (>= 0.5.2)
     httpi (2.4.2)
       rack
       socksify
@@ -72,6 +74,7 @@ GEM
     mime-types (1.25.1)
     mini_portile2 (2.1.0)
     multi_json (1.12.1)
+    multi_xml (0.5.5)
     newrelic_rpm (3.16.1.320)
     nokogiri (1.6.8)
       mini_portile2 (~> 2.1.0)
@@ -166,6 +169,7 @@ DEPENDENCIES
   bootstrap-sass (~> 3.2.0)
   coffee-rails (~> 3.2.1)
   hirb (~> 0.7.2)
+  httparty
   jquery-rails
   newrelic_rpm
   nokogiri

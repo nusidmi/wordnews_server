@@ -100,6 +100,7 @@ class LearningsController < ApplicationController
             if !result.nil?
               word.machine_translation_id = result[0]
               word.translation = result[1]
+              word.vote = result[2]
               word.translation_id = get_word_id(word.translation, lang) 
             end
 
@@ -153,7 +154,7 @@ class LearningsController < ApplicationController
           text_idx: word.word_index, translator: translator, lang: lang, text:word.text).pluck_all(:id, :translation).first
     
     if !result.nil?
-      return [result['id'], result['translation']]
+      return [result['id'], result['translation'], result['vote']]
     end
       
     if translator == 'dict'
@@ -170,7 +171,7 @@ class LearningsController < ApplicationController
         article_id:article_id, paragraph_idx: word.paragraph_index, text_idx: word.word_index, 
         translator: translator, lang:lang, vote: 0)
       mt.save
-      return [mt.id, translation]
+      return [mt.id, translation, 0]
     end
   end
   
