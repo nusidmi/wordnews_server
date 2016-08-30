@@ -317,10 +317,44 @@ class LearningsController < ApplicationController
     end
   end
   
-
+  # TODO: update score etc in user table
   def view
     if !params[:user_id].present? or !params[:translation_pair_id]
+       respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
     end
+    
+    user = User.where(:public_key => params[:user_id]).first
+    if user.nil?
+      # response
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    
+    learning_history = LearningHistory.where(user_id: user.id, translation_pair_id: params[:translation_pair_id]).first
+    if !learning_history.nil?
+      if learning_history.increment!(:view_count)
+        respond_to do |format|
+          format.json { render json: {msg: Utilities::Message::MSG_OK}, status: :ok }
+        end
+      end
+      return
+    end
+    
+    respond_to do |format|
+      format.json { render json: {msg: Utilities::Message::MSG_UPDATE_FAIL}, status: :ok }
+    end
+  end
+  
+  
+  def take_quiz
+    
   end
   
 end
