@@ -111,6 +111,7 @@ class LearningsController < ApplicationController
               word.pair_id = get_translation_pair_id(word.word_id, word.translation_id, lang)
               word.learn_type = get_learn_type(user_id, word.pair_id, lang) # view/test/skip
               word.pronunciation = get_pronunciation_by_word_id(word.translation_id, lang)
+              word.audio_urls = get_audio_urls(word.pronunciation, lang)
               
               if word.learn_type!='skip' and !word.pair_id.nil?
                 if word.learn_type=='test'
@@ -144,6 +145,7 @@ class LearningsController < ApplicationController
         if !word.annotations.nil?
           word.annotations.each do |annotation|
             annotation['pronunciation'] = get_pronunciation_by_word(annotation['translation'], lang)
+            annotation['audio_urls'] = get_audio_urls(annotation['pronunciation'], lang)
           end
         end
       end
@@ -260,7 +262,19 @@ class LearningsController < ApplicationController
     end
   end
   
-    
+
+  def get_audio_urls(pronunciation, lang)
+    if !pronunciation.nil?
+      if lang==Utilities::Lang::CODE[:Chinese]
+        urls = []
+        pronunciation.split.each do |pinyin|
+          urls.push(CHINESE_AUDIO_HOST + '/' + pinyin + '.mp3')
+        end
+        return urls
+      end
+    end
+  end
+  
   
   def generate_quiz(word, lang)
     if lang==Utilities::Lang::CODE[:Chinese]
