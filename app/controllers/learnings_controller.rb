@@ -27,6 +27,17 @@ class LearningsController < ApplicationController
     website = params[:website]
     title = params[:title]
     publication_date = params[:publication_date]
+    
+    user = User.where(:public_key => public_key).first
+    if user.nil?
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    user_id = user.id
+
 
     # pre-process text
     @sentences = []
@@ -44,9 +55,7 @@ class LearningsController < ApplicationController
       end
     end
 
-    user = User.where(:public_key => public_key).first
-    user_id = user.id
-
+  
     article = Utilities::ArticleUtil.get_or_create_article(url, url_postfix, lang, website, title, publication_date)
     article_id = article['id']
     @words_to_learn = select_learn_words(num_of_words, user_id, lang, translator, article_id)
@@ -306,7 +315,12 @@ class LearningsController < ApplicationController
     rescue Exception => e
       Rails.logger.warn "MCQGenerator.py: Error e.msg=>[" + e.message + "]"
     end
-    
+  end
+  
+
+  def view
+    if !params[:user_id].present? or !params[:translation_pair_id]
+    end
   end
   
 end

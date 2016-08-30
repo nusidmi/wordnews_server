@@ -35,6 +35,14 @@ class AnnotationsController < ApplicationController
     end
 
     user = User.where(:public_key => params[:user_id]).first
+    if user.nil?
+      # response
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
+    end
     user_id = user.id
 
     # obtain the article id
@@ -102,6 +110,14 @@ class AnnotationsController < ApplicationController
     end
 
     user = User.where(:public_key => params[:user_id]).first
+    if user.nil?
+      # response
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
+    end
     user_id = user.id
 
     if params[:lang].present?
@@ -135,7 +151,7 @@ class AnnotationsController < ApplicationController
     @user = User.where(:public_key => params[:user_id]).first
     if @user.nil?
       respond_to do |format|
-        format.json { render json: {msg: Utilities::Message::MSG_NOT_FOUND}, 
+        format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request}
       end
       return
@@ -169,7 +185,7 @@ class AnnotationsController < ApplicationController
     @user = User.where(:public_key => params[:user_id]).first
     if @user.nil?
       respond_to do |format|
-        format.json { render json: {msg: Utilities::Message::MSG_NOT_FOUND}, 
+        format.json { render json: {msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request}
       end
       return
