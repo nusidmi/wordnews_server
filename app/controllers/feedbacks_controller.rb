@@ -17,9 +17,9 @@ class FeedbacksController < ApplicationController
     elsif params[:source]=='human'
       @translation = Annotation.find_by_id(params[:translation_pair_id])
     end
-    
-    @user = User.find_by_id(params[:user_id])
-    @vote_history = VoteHistory.where(user_id: params[:user_id], pair_id: params[:translation_pair_id],
+
+    @user = User.where(:public_key => params[:user_id]).first
+    @vote_history = VoteHistory.where(user_id: @user.id, pair_id: params[:translation_pair_id],
             source: TRANSLATION_SOURCE[params[:source]]).first
     score = params[:score].to_i
 

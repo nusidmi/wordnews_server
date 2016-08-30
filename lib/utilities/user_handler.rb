@@ -45,25 +45,24 @@ module UserHandler
     rand(USER_ID_CREATE_MIN..USER_ID_CREATE_MAX)
   end
 
-  def UserHandler.validate_userID(userID)
-    if !userID.present?
-      Rails.logger.debug "validate_userID; ID is empty string"
+  def UserHandler.validate_public_key(public_key)
+    if !public_key.present?
+      Rails.logger.debug "validate_public_key; public_key is empty string"
       return false
     end
-    if !(userID =~ /^([0-9])+$/)
-      Rails.logger.debug "validate_userID; ID is not a number"
+    if !(public_key =~ /^([0-9])+$/)
+      Rails.logger.debug "validate_public_key; public_key is not a number"
       return false
     end
 
-    userID = userID.to_i
+    public_key = public_key.to_i
     
-    # TODO: enable this after fixing client side
-    #if !userID.between?(USER_ID_CREATE_MIN, USER_ID_CREATE_MAX)
-    #  Rails.logger.debug "validate_userID; ID is not in valid range"
-    #  return false
-    #end
+    if !public_key.between?(USER_ID_CREATE_MIN, USER_ID_CREATE_MAX)
+      Rails.logger.debug "validate_public_key; public_key is not in valid range"
+      return false
+    end
 
-    #Rails.logger.debug "validate_userID; ID[" + userID.to_s + "] is valid"
+    #Rails.logger.debug "validate_public_key; public_key[" + public_key.to_s + "] is valid"
     return true
   end
 
@@ -76,9 +75,13 @@ module UserHandler
 
     begin
       newUser = User.new
-      newUser.if_translate = 1
-      newUser.translate_categories = '1,2,3,4' # the default will be translate all
-      newUser.user_name = generate_userID()
+      newUser.score = USER_START_SCORE
+      newUser.role = USER_ROLE_LEARNER
+      newUser.rank = USER_START_RANK
+      newUser.status = USER_STATUS_NOT_BLOCKED
+      newUser.trans_count = USER_START_TRANSLATE_COUNT
+      newUser.anno_count = USER_START_ANNOTATION_COUNT
+      newUser.public_key = generate_userID()
 
       if newUser.new_record?
         if newUser.save
@@ -90,7 +93,7 @@ module UserHandler
     end while counter < MAX_USER_CREATE_RETRIES
 
     if newUser != nil
-      Rails.logger.info "create_new_user: New user created! [Name:" + newUser.user_name.to_s + "] Tries:{" + counter.to_s + "}"
+      Rails.logger.info "create_new_user: New user created! [Name:" + newUser.public_key.to_s + "] Tries:{" + counter.to_s + "}"
     else
       Rails.logger.warn "create_new_user: ERROR: cannot create new user after " + counter.to_s + " trys"
     end

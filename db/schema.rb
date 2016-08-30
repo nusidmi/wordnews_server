@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160823075638) do
+ActiveRecord::Schema.define(:version => 20160826090940) do
 
   create_table "annotation_histories", :force => true do |t|
     t.integer  "user_id"
@@ -243,11 +243,28 @@ ActiveRecord::Schema.define(:version => 20160823075638) do
 
   create_table "users", :force => true do |t|
     t.string   "user_name"
-    t.integer  "if_translate"
-    t.string   "translate_categories"
-    t.datetime "created_at",           :null => false
-    t.datetime "updated_at",           :null => false
+    t.datetime "created_at",                     :null => false
+    t.datetime "updated_at",                     :null => false
+    t.string   "email"
+    t.string   "password_digest"
+    t.integer  "public_key",                     :null => false
+    t.string   "fb_id"
+    t.string   "gp_id"
+    t.string   "twitter_id"
+    t.integer  "score",           :default => 0, :null => false
+    t.text     "avatar"
+    t.integer  "role",            :default => 2, :null => false
+    t.integer  "rank",            :default => 1, :null => false
+    t.integer  "status",          :default => 1, :null => false
+    t.integer  "trans_count",     :default => 0, :null => false
+    t.integer  "anno_count",      :default => 0, :null => false
+    t.datetime "registered_at"
+    t.string   "remember_digest"
   end
+
+  add_index "users", ["email"], :name => "index_users_on_email"
+  add_index "users", ["public_key"], :name => "index_users_on_public_key"
+  add_index "users", ["remember_digest"], :name => "index_users_on_remember_digest"
 
   create_table "vote_histories", :force => true do |t|
     t.integer  "user_id"

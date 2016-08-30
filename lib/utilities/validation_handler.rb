@@ -120,4 +120,9 @@ module ValidationHandler
   def ValidationHandler.validate_integer(num)
     true if Integer(num) rescue false
   end
+
+  def ValidationHandler.validate_email(email)
+    (email =~ /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i)
+  end
+
 end

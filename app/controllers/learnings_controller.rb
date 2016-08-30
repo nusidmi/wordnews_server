@@ -21,7 +21,7 @@ class LearningsController < ApplicationController
     lang = params[:lang]
     translator = params[:translator]
     num_of_words = params[:num_of_words].to_i
-    user_id = params[:user_id]
+    public_key = params[:user_id]
     url_postfix = params[:url_postfix]
     url = params[:url]
     website = params[:website]
@@ -42,8 +42,11 @@ class LearningsController < ApplicationController
           @paragraphs[p.index] = p
         end
       end
-    end 
-    
+    end
+
+    user = User.where(:public_key => public_key).first
+    user_id = user.id
+
     article = Utilities::ArticleUtil.get_or_create_article(url, url_postfix, lang, website, title, publication_date)
     article_id = article['id']
     @words_to_learn = select_learn_words(num_of_words, user_id, lang, translator, article_id)

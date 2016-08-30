@@ -25,12 +25,12 @@ class TranslatesController < ApplicationController
     result = Hash.new
     result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
 
-    user_name = params[:name]
+    public_key = params[:user_id]
     url = params[:url] || ''
     url = url.chomp '/'
 
-    # Validate userID
-    if !UserHandler.validate_userID( user_name )
+    # Validate public_key
+    if !UserHandler.validate_public_key( public_key )
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
       return render json: result, status: :bad_request
     end
@@ -50,9 +50,9 @@ class TranslatesController < ApplicationController
     # Validate num_words include limit check
     num_words = ValidationHandler.validate_input_num_words(params[:num_words])
 
-    user = User.where(:user_name => user_name).first
+    user = User.where(:public_key => public_key).first
     if user.nil?
-      Rails.logger.warn "do_replacements_by_dictionary: User[" + user_name.to_s + "] not found"
+      Rails.logger.warn "do_replacements_by_dictionary: User[" + public_key.to_s + "] not found"
       result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
       return render json: result, status: :bad_request
     end
@@ -234,11 +234,11 @@ class TranslatesController < ApplicationController
     result = Hash.new
     result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
 
-    user_name = params[:name]
+    public_key = params[:user_id]
     url = params[:url] || ''
     url = url.chomp '/'
 
-    if !UserHandler.validate_userID( user_name )
+    if !UserHandler.validate_public_key( public_key )
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
       return render json: result, status: :bad_request
     end
@@ -258,9 +258,9 @@ class TranslatesController < ApplicationController
     # Validate num_words include limit check
     num_words = ValidationHandler.validate_input_num_words(params[:num_words])
 
-    user = User.where(:user_name => user_name).first
+    user = User.where(:public_key => public_key).first
     if user.nil?
-      Rails.logger.warn "do_replacements_by_bing: User[" + user_name.to_s + "] not found"
+      Rails.logger.warn "do_replacements_by_bing: User[" + public_key.to_s + "] not found"
       result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
       return render json: result, status: :bad_request
     end
@@ -288,12 +288,12 @@ class TranslatesController < ApplicationController
     result = Hash.new
     result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
 
-    user_name = params[:name]
+    public_key = params[:user_id]
     url = params[:url] || ''
     url = url.chomp '/'
 
-    # Validate userID
-    if !UserHandler.validate_userID( user_name )
+    # Validate public_key
+    if !UserHandler.validate_public_key( public_key )
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
       return render json: result, status: :bad_request
     end
@@ -313,9 +313,9 @@ class TranslatesController < ApplicationController
     # Validate num_words include limit check
     num_words = ValidationHandler.validate_input_num_words(params[:num_words])
 
-    user = User.where(:user_name => user_name).first
+    user = User.where(:public_key => public_key).first
     if user.nil?
-      Rails.logger.warn "do_replacements_multiple_paragraphs_by_bing: User[" + user_name.to_s + "] not found"
+      Rails.logger.warn "do_replacements_multiple_paragraphs_by_bing: User[" + public_key.to_s + "] not found"
       result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
       return render json: result, status: :bad_request
     end
@@ -447,12 +447,12 @@ class TranslatesController < ApplicationController
     result = Hash.new
     result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
 
-    user_name = params[:name]
+    public_key = params[:user_id]
     url = params[:url] || ''
     url = url.chomp '/'
 
-    # Validate userID
-    if !UserHandler.validate_userID( user_name )
+    # Validate public_key
+    if !UserHandler.validate_public_key( public_key )
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
       return render json: result, status: :bad_request
     end
@@ -479,9 +479,9 @@ class TranslatesController < ApplicationController
 
     meaning_id = params[:wordID]
 
-    user = User.where(:user_name => user_name).first
+    user = User.where(:public_key => public_key).first
     if user.nil?
-      Rails.logger.warn "do_remember: User[" + user_name.to_s + "] not found"
+      Rails.logger.warn "do_remember: User[" + public_key.to_s + "] not found"
       result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
       return render json: result, status: :bad_request
     end
@@ -527,52 +527,35 @@ class TranslatesController < ApplicationController
 
   def calculate
 
-    isNameValid = false
-    user_name = ''
-    user = nil
+    result = Hash.new
+    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
 
-    # If name is provided,
-    # 1. Test if userID is valid - 16 character, lowercase, hex
-    # 2. Check for user account
+    public_key = params[:user_id]
 
-    if params.has_key?(:name)
-      user_name = params[:name]
-      if UserHandler.validate_userID(user_name)
-        user = User.where(:user_name => user_name).first
-        if !user.blank?
-          # User is not found
-          isNameValid = true
-        end
-      end
+    # Validate public_key
+    if !UserHandler.validate_public_key( public_key )
+      result['msg'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
     end
 
-    result = Hash.new
-    result['userID'] = -1
-    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
+    user = User.where(:public_key => public_key).first
+    if user.nil?
+      Rails.logger.warn "calculate: User[" + public_key.to_s + "] not found"
+      result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
+      return render json: result, status: :bad_request
+    end
 
     result['learnt'] = 0
     result['toLearn'] = 0
 
-    if isNameValid == false
-      user = UserHandler.create_new_user()
-      if !user.nil?
-        result['userID'] = user.user_name.to_i
-        result['msg'] =  Utilities::Message::MSG_OK
-      else
-        result['msg'] =  Utilities::Message::MSG_GET_CALCULATE_USER_CREATE_FAILURE
-        return render json: result, status: :internal_server_error
-      end
-    else
-      user_id = user.id
-      querylearnt = 'user_id=' + user_id.to_s+ ' and frequency > 0'
-      querytolearn = 'user_id=' + user_id.to_s+ ' and frequency = 0'
+    user_id = user.id
+    querylearnt = 'user_id=' + user_id.to_s+ ' and frequency > 0'
+    querytolearn = 'user_id=' + user_id.to_s+ ' and frequency = 0'
 
-      result['learnt'] = History.count('user_id', :conditions => [querylearnt])
-      result['toLearn'] = History.count('user_id', :conditions => [querytolearn])
-      result['userID'] = user.user_name.to_i
+    result['learnt'] = History.count('user_id', :conditions => [querylearnt])
+    result['toLearn'] = History.count('user_id', :conditions => [querytolearn])
 
-      result['msg'] =  Utilities::Message::MSG_OK
-    end
+    result['msg'] =  Utilities::Message::MSG_OK
 
     render json: result
   end

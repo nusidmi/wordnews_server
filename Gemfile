@@ -44,6 +44,7 @@ gem 'test-unit'
 gem 'newrelic_rpm'
 
 gem "savon", "~> 2.10.0"
+gem 'bcrypt-ruby', '~> 3.0.0'
 
 gem  "httparty"
 
