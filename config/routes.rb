@@ -38,6 +38,7 @@ TranslateApp::Application.routes.draw do
   # learn
   match '/show_learn_words', to: 'learnings#show_learn_words', via: :post
   match '/view', to: 'learnings#view', via: :post
+  match '/take_quiz', to:'learnings#take_quiz', via: :post
   
   match '/vote', to: 'feedbacks#vote', via: [:get, :post]
 

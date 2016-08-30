@@ -317,7 +317,8 @@ class LearningsController < ApplicationController
     end
   end
   
-  # TODO: update score etc in user table
+  
+  # TODO: 1) update score/level etc in user table, 2) send the updated score/rank to user
   def view
     if !params[:user_id].present? or !params[:translation_pair_id]
        respond_to do |format|
@@ -353,7 +354,47 @@ class LearningsController < ApplicationController
   end
   
   
+  # TODO: 1) update score/level etc in user table, 2) send the updated score/rank to user?
+  # If the user fails the test, decrease the test_count in his learning_history; otherwise, increase
   def take_quiz
+    if !params[:user_id].present? or !params[:translation_pair_id].present? or !params[:answer].present?
+       respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    
+    user = User.where(:public_key => params[:user_id]).first
+    if user.nil?
+      # response
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    
+    learning_history = LearningHistory.where(user_id: user.id, translation_pair_id: params[:translation_pair_id]).first
+    if !learning_history.nil?
+      success = false
+      if params[:answer]=='correct'
+        success = learning_history.increment!(:test_count)
+      elsif params[:answer]=='wrong'
+        success = learning_history.decrement!(:test_count)
+      end
+
+      if success
+        respond_to do |format|
+          format.json { render json: {msg: Utilities::Message::MSG_OK}, status: :ok }
+        end
+        return
+      end
+    end
+    
+    respond_to do |format|
+      format.json { render json: {msg: Utilities::Message::MSG_UPDATE_FAIL}, status: :ok }
+    end
     
   end
   
