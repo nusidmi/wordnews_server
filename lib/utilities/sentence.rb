@@ -8,10 +8,13 @@ class Utilities::Sentence
         parse(word_tag_str)
     end
     
-    # def initialize(text, words)
-    #     @text = text
-    #     @words = words
-    # end
+    def initialize(text, words_str, tags_str, paragraph_index, sentence_index)
+        @text = text
+        @paragraph_index = paragraph_index
+        @sentence_index = sentence_index
+        parse(words_str, tags_str)
+        
+    end
     
     # word_index is the index in words[]
     # get the number of words before word_index
@@ -45,12 +48,19 @@ class Utilities::Sentence
     end
     
     
-    def parse_server(parsed_result)
-        @text = parsed_result['sent']
-        @words = parsed_result['words'].split
-        @tags = parsed_result['tags'].split
+    def parse(words_str, tags_str)
+        @words = []
+        @tags = []
         
+        words_str.split.each do |word|
+            @words.push(word)
+        end
+        
+        tags_str.split.each do |tag|
+            @tags.push(tag)
+        end
     end
+    
     
     # in character
     def get_word_position(word, word_index)

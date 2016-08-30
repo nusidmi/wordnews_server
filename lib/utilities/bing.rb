@@ -30,17 +30,33 @@ module Bing
 		if !ENV["bingid"].present? || !ENV["bingkey"].present? || !ENV["bingaccount"].present?
 			Rails.logger.warn "Bing_translator: Init failed. env missing"
 		end
+			
+			
 
 		begin
-			translator = BingTranslator.new(ENV["bingid"], ENV["bingkey"], false, ENV["bingaccount"])
-			result = translator.translate_array2 sentence, :from => from, :to => to #'zh-CHS'
-			if !result.nil?
-				translation_sentence = result[0][0]
-				puts translation_sentence
-				alignments = result[0][1] # E.g., 0:3-0:0 5:6-1:1 8:9-2:3 11:17-4:5 18:18-6:6
-				puts alignments
-
-			  alignments.split(' ').each do |mapping|
+		
+			# translate the same sentence in the last call
+			if @prev_sentence==sentence
+				alignments = @prev_alignments
+				translation_sentence = @prev_translation_sentence
+				#puts 're-use'
+			else
+				translator = BingTranslator.new(ENV["bingid"], ENV["bingkey"], false, ENV["bingaccount"])
+				result = translator.translate_array2 sentence, :from => from, :to => to #'zh-CHS'
+				if !result.nil?
+					translation_sentence = result[0][0]
+					alignments = result[0][1] # E.g., 0:3-0:0 5:6-1:1 8:9-2:3 11:17-4:5 18:18-6:6
+					
+					@prev_sentence = sentence
+					@prev_translation_sentence = translation_sentence
+					@prev_alignments = alignments
+					#puts translation_sentence
+					#puts alignments
+				end
+			end
+			
+			if !translation_sentence.nil? and !alignments.nil?			
+				alignments.split(' ').each do |mapping|
 			  	pairs = mapping.split('-')
 			  	source_range = pairs[0].split(':')
 			  	target_range = pairs[1].split(':')
@@ -50,18 +66,14 @@ module Bing
 			  	elsif source_range[1].to_i>word_position[0]
 			  		return 
 			  	end
-			  end
+				end
 			end
-			
 		rescue BingTranslator::AuthenticationException
 			Rails.logger.warn "Bing_translator: Authentication Error"
 		rescue Exception => e
 			Rails.logger.warn "Bing_translator: Error e.msg=>[" + e.message + "]"
 		end
 	end
-	
-	
-	
 	
 
 	def speak(text, language)

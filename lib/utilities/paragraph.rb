@@ -1,4 +1,7 @@
 require 'yaml'
+require 'httparty'
+require 'json'
+
 
 class Utilities::Paragraph
 #class Paragraph
@@ -9,13 +12,8 @@ class Utilities::Paragraph
     @sentences = []
   end
   
-  # def initialize(text, sentences)
-  #   @text = text
-  #   @sentences = sentences
-  # end
     
-  # TODO: improve the efficiency
-  def process_text()
+  def process_text_script()
 
     sentences_str = `python "./public/text_processing.py" sentence_segmenter "#{@text}"`
     if sentences_str=='ERROR'
@@ -35,6 +33,28 @@ class Utilities::Paragraph
     end
     return @sentences
   end
+  
+  
+  # TODO: get the url of nlp host from a job scheduler
+  def process_text()
+    params = {"mode": "text_process_pipeline", "text": @text}
+    response = HTTParty.post(NLP_HOST+'/text_process', :query=>params)
+    
+    if response.code!=200 or response.body=='' 
+      puts 'Error in processing ' + @text
+      return []
+    end
+    
+    results = JSON.parse(response.body)
+    results.each_with_index do |result, result_index|
+      s = Utilities::Sentence.new(result["sent"], result["words"], result["tags"], @index, result_index)
+      @sentences.push(s)
+    end
+    
+    return @sentences
+    
+  end
+  
   
   
   # the number of occurence before the current position

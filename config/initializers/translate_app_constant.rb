@@ -20,4 +20,6 @@ USER_ID_CREATE_MAX                      = 2000000000.freeze
 
 POS_INDEX                               = {'NN'=>1, 'VB'=>2, 'RB'=>4, 'JJ'=>5}
 ANNOTATION_COUNT_MAX                    = 5.freeze
-TRANSLATION_SOURCE                             = {'machine'=>0, 'human'=>1}
+TRANSLATION_SOURCE                      = {'machine'=>0, 'human'=>1}
+
+NLP_HOST                                = 'http://127.0.0.1:5000'
