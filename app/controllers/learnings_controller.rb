@@ -174,7 +174,7 @@ class LearningsController < ApplicationController
     if translator == 'dict'
       translation = translate_by_dictionary(word.word_id, word.pos_tag, lang)
     elsif translator == 'ims'
-      translation translate_by_ims(word.text, sentence.text, lang)
+      translation translate_by_ims(word.text, word.position, sentence.text, lang)
     elsif translator == 'bing'
       translation = translate_by_bing(word.position, sentence.text, lang)
     end
@@ -212,8 +212,10 @@ class LearningsController < ApplicationController
   end
   
   # TODO
-  def translate_by_ims(word_text, sentence, lang)
-    
+  def translate_by_ims(word, word_position, sentence, lang)
+    if lang==Utilities::Lang::CODE[:Chinese]
+      return Utilities::ImsTranslator.translate(word, word_position, sentence)
+    end    
   end
 
   # TODO: design the rule

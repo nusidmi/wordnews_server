@@ -41,3 +41,4 @@ TRANSLATION_SOURCE                      = {'machine'=>0, 'human'=>1}
 
 NLP_HOST                                = 'http://127.0.0.1:5000'
 CHINESE_AUDIO_HOST                      = 'http://www.chinese-tools.com/jdd/public/ct/pinyinaudio'
+IMS_HOST                                = 'http://ims-translator.herokuapp.com'

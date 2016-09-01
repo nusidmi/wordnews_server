@@ -12,10 +12,16 @@ class FeedbacksController < ApplicationController
       return
     end
     
-    if params[:source]=='machine'
+    if params[:source]=='0'
       @translation = MachineTranslation.find_by_id(params[:translation_pair_id])
-    elsif params[:source]=='human'
+    elsif params[:source]=='1'
       @translation = Annotation.find_by_id(params[:translation_pair_id])
+    else
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                        status: :bad_request }
+      end
+      return
     end
 
     @user = User.where(:public_key => params[:user_id]).first
