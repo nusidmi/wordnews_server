@@ -7,19 +7,23 @@
         <% if flash[:error] || flash[:errors] %>
             <div class="alert alert-danger"><%= flash[:error] || flash[:errors] %></div>
         <% end %>
-        <% flash[:error] = flash[:errors] = flash[:notice] = nil %>
+        <% if flash[:info] %>
+            <div class="alert alert-info"><%= flash[:info] || flash[:info] %></div>
+        <% end %>
+        <% flash[:error] = flash[:errors] = flash[:info] = nil %>
+
         <%= f.hidden_field :public_key %>
         <%= f.label :user_name, "User Name" %>
-        <%= f.text_field :user_name, class: 'form-control' %>
+        <%= f.text_field :user_name, class: 'form-control', :required => true%>
 
         <%= f.label :email, "Email Address" %>
-        <%= f.email_field :email, class: 'form-control' %>
+        <%= f.email_field :email, class: 'form-control', :required => true%>
 
         <%= f.label :password %>
-        <%= f.password_field :password, class: 'form-control' %>
+        <%= f.password_field :password, class: 'form-control', :required => true%>
 
         <%= f.label :password_confirmation, "Confirm Password" %>
-        <%= f.password_field :password_confirmation, class: 'form-control' %>
+        <%= f.password_field :password_confirmation, class: 'form-control', :required => true%>
 
         <%= f.submit "Sign Up!", class: "btn btn-primary" %>
     <% end %>

@@ -54,6 +54,8 @@ TranslateApp::Application.routes.draw do
   match '/login', to: 'sessions#create', via: :post
   match '/login_complete', to: 'sessions#login_complete', via: :get
   match '/logout', to: 'sessions#logout', via: :get
+  match '/request_password_reset', to: 'PasswordResets#request_password_reset', via: [:get,:post]
+  match '/password_reset/:id', to: 'PasswordResets#reset_password', via: [:get,:post]
 
 
   # The priority is based upon order of creation:
