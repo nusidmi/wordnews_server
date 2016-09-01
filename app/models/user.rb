@@ -1,5 +1,5 @@
 class User < ActiveRecord::Base
-  attr_accessor :remember_token
+  attr_accessor :remember_token, :reset_token
 
   attr_accessible :user_name, :email, :password_digest, :public_key, :fb_id, :gp_id, :twitter_id, :score, :avatar, :role, :rank, :status, :trans_count, :anno_count
   validates :user_name, length: { maximum: 255 }
@@ -22,15 +22,28 @@ class User < ActiveRecord::Base
     update_attribute(:remember_digest, User.digest(remember_token))
   end
 
-  def authenticated?(remember_token)
-    if remember_digest.nil?
-      return false
-    else
-      BCrypt::Password.new(remember_digest).is_password?(remember_token)
-    end
+  def authenticated?(attribute, token)
+      digest = send("#{attribute}_digest")
+      return false if digest.nil?
+      BCrypt::Password.new(digest).is_password?(token)
   end
 
   def forget
     update_attribute(:remember_digest, nil)
   end
+
+  def create_reset_digest
+    self.reset_token = User.new_token
+    update_attribute(:reset_digest,  User.digest(reset_token))
+    update_attribute(:reset_sent_at, Time.zone.now)
+  end
+
+  def send_password_reset_email
+    UserMailer.password_reset(self).deliver
+  end
+
+  def password_reset_expired?
+    reset_sent_at < 2.hours.ago
+  end
+
 end

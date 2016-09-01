@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160826090940) do
+ActiveRecord::Schema.define(:version => 20160829064310) do
 
   create_table "annotation_histories", :force => true do |t|
     t.integer  "user_id"
@@ -260,6 +260,8 @@ ActiveRecord::Schema.define(:version => 20160826090940) do
     t.integer  "anno_count",      :default => 0, :null => false
     t.datetime "registered_at"
     t.string   "remember_digest"
+    t.string   "reset_digest"
+    t.datetime "reset_sent_at"
   end
 
   add_index "users", ["email"], :name => "index_users_on_email"
