@@ -71,15 +71,19 @@ def process_pipeline(text):
     
 @app.route("/text_process", methods=['POST'])
 def text_process():
-  text = request.args.get('text', '')
-  mode = request.args.get('mode', '')
+  # for get
+  #text = request.args.get('text', '')
+  #mode = request.args.get('mode', '')
   
-  print text
-  print mode
+  content = request.json
+  text = content['text']
+  mode = content['mode']
+  
+  #print text
+  #print mode
   
   if text=='' or mode=='':
      return "Invalid Parameters"
-  
   
   result = '{}'
   if mode=='sentence_segmenter':
