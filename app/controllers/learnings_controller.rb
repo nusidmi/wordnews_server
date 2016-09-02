@@ -112,7 +112,7 @@ class LearningsController < ApplicationController
             if !result.nil?
               word.machine_translation_id = result[0]
               word.translation = result[1]
-              word.vote = result[2]
+              word.weighted_vote = result[2]
               word.translation_id = get_word_id(word.translation, lang) 
             end
 
@@ -146,15 +146,17 @@ class LearningsController < ApplicationController
   
   # Return at most ANNOTATION_COUNT_MAX top voted annotations
   # TODO: pronunciation provided by user?
+  # TODO: change the order when vote weight rule changes
   def get_annotations(article_id, lang)
     @words_to_learn.each do |word|
       if word.learn_type=='view'
         word.annotations = Annotation.where('article_id=? AND paragraph_idx=? AND text_idx=? AND selected_text=?',
-            article_id, word.paragraph_index, word.word_index, word.text).order('vote desc').limit(ANNOTATION_COUNT_MAX).pluck_all(:id, :translation)
+            article_id, word.paragraph_index, word.word_index, word.text).order('vote + 0.1*implicit_vote DESC').limit(ANNOTATION_COUNT_MAX).pluck_all(:id, :translation, :vote, :implicit_vote)
         if !word.annotations.nil?
           word.annotations.each do |annotation|
             annotation['pronunciation'] = get_pronunciation_by_word(annotation['translation'], lang)
             annotation['audio_urls'] = get_audio_urls(annotation['pronunciation'], lang)
+            annotation['weighted_vote'] = get_weighted_vote(annotation['vote'], annotation['implicit_vote'])
           end
         end
       end
@@ -165,10 +167,11 @@ class LearningsController < ApplicationController
   # First retrieve the translation from database. If not exits, request translator and save
   def translate(word, sentence, lang, translator, article_id)
     result = MachineTranslation.where(article_id: article_id, paragraph_idx: word.paragraph_index,
-          text_idx: word.word_index, translator: translator, lang: lang, text:word.text).pluck_all(:id, :translation).first
+          text_idx: word.word_index, translator: translator, lang: lang, text:word.text).pluck_all(:id, :translation, 
+            :vote, :implicit_vote).first
     
     if !result.nil?
-      return [result['id'], result['translation'], result['vote']]
+      return [result['id'], result['translation'], get_weighted_vote(result['vote'], result['implicit_vote'])]
     end
       
     if translator == 'dict'
@@ -397,7 +400,12 @@ class LearningsController < ApplicationController
     respond_to do |format|
       format.json { render json: {msg: Utilities::Message::MSG_UPDATE_FAIL}, status: :ok }
     end
-    
+  end
+  
+  
+  # TODO: Change this if a new rule is designed
+  def get_weighted_vote(explicit_vote, implicit_vote)
+    return explicit_vote + 0.1 * implicit_vote
   end
   
 end

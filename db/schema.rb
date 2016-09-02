@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160829064310) do
+ActiveRecord::Schema.define(:version => 20160902030504) do
 
   create_table "annotation_histories", :force => true do |t|
     t.integer  "user_id"
@@ -32,6 +32,7 @@ ActiveRecord::Schema.define(:version => 20160829064310) do
     t.datetime "updated_at",                   :null => false
     t.integer  "article_id"
     t.integer  "vote",          :default => 0
+    t.integer  "implicit_vote", :default => 0, :null => false
   end
 
   add_index "annotations", ["article_id"], :name => "index_annotations_on_article_id"
@@ -185,8 +186,9 @@ ActiveRecord::Schema.define(:version => 20160829064310) do
     t.integer  "paragraph_idx"
     t.integer  "text_idx"
     t.integer  "vote"
-    t.datetime "created_at",    :null => false
-    t.datetime "updated_at",    :null => false
+    t.datetime "created_at",                   :null => false
+    t.datetime "updated_at",                   :null => false
+    t.integer  "implicit_vote", :default => 0, :null => false
   end
 
   create_table "meanings", :force => true do |t|
@@ -271,11 +273,14 @@ ActiveRecord::Schema.define(:version => 20160829064310) do
   create_table "vote_histories", :force => true do |t|
     t.integer  "user_id"
     t.integer  "pair_id"
-    t.integer  "vote",       :default => 0
-    t.datetime "created_at",                :null => false
-    t.datetime "updated_at",                :null => false
+    t.integer  "vote",        :default => 0
+    t.datetime "created_at",                    :null => false
+    t.datetime "updated_at",                    :null => false
     t.integer  "source"
+    t.boolean  "is_explicit", :default => true, :null => false
   end
+
+  add_index "vote_histories", ["user_id", "pair_id", "source", "is_explicit"], :name => "vote_search_index"
 
   create_table "word_categories", :force => true do |t|
     t.string   "category_name"

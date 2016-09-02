@@ -1,3 +1,5 @@
+# replaced by learnings_controller.rb
+
 #!bin/env ruby
 #encoding: utf-8
 require 'json'
@@ -5,15 +7,6 @@ require 'json'
 class TranslatesController < ApplicationController
   #include UserHandler
   #include Bing
-
-  
-  def select_learn_words(user, num_words, paras)
-    # 1. sentence segmentation
-    # 2. word tokenization
-    
-    
-    
-  end
   
     
   # Issues: 
