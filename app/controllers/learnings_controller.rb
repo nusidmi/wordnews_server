@@ -97,7 +97,7 @@ class LearningsController < ApplicationController
         
         word_pos = sentence.tags[index]
         if !word_text.nil? and !word_set.include?(word_text) and Utilities::Text.is_proper_to_learn(word_text, word_pos)
-          word_id = get_word_id(word_text, Utilities::Lang::CODE[:English])
+          word_id = Utilities::LearningUtil.get_word_id(word_text, Utilities::Lang::CODE[:English])
 
           if !word_id.nil?
             word_index = @paragraphs[sentence.paragraph_index].get_word_occurence_index(word_text, 
@@ -113,14 +113,14 @@ class LearningsController < ApplicationController
               word.machine_translation_id = result[0]
               word.translation = result[1]
               word.weighted_vote = result[2]
-              word.translation_id = get_word_id(word.translation, lang) 
+              word.translation_id = Utilities::LearningUtil.get_word_id(word.translation, lang) 
             end
 
             if !word.translation.nil? and !word.translation_id.nil?
-              word.pair_id = get_translation_pair_id(word.word_id, word.translation_id, lang)
-              word.learn_type = get_learn_type(user_id, word.pair_id, lang) # view/test/skip
-              word.pronunciation = get_pronunciation_by_word_id(word.translation_id, lang)
-              word.audio_urls = get_audio_urls(word.pronunciation, lang)
+              word.pair_id = Utilities::LearningUtil.get_translation_pair_id(word.word_id, word.translation_id, lang)
+              word.learn_type = Utilities::LearningUtil.get_learn_type(user_id, word.pair_id, lang) # view/test/skip
+              word.pronunciation = Utilities::LearningUtil.get_pronunciation_by_word_id(word.translation_id, lang)
+              word.audio_urls = Utilities::LearningUtil.get_audio_urls(word.pronunciation, lang)
               
               if word.learn_type!='skip' and !word.pair_id.nil?
                 if word.learn_type=='test'
@@ -154,9 +154,9 @@ class LearningsController < ApplicationController
             article_id, word.paragraph_index, word.word_index, word.text).order('vote + 0.1*implicit_vote DESC').limit(ANNOTATION_COUNT_MAX).pluck_all(:id, :translation, :vote, :implicit_vote)
         if !word.annotations.nil?
           word.annotations.each do |annotation|
-            annotation['pronunciation'] = get_pronunciation_by_word(annotation['translation'], lang)
-            annotation['audio_urls'] = get_audio_urls(annotation['pronunciation'], lang)
-            annotation['weighted_vote'] = get_weighted_vote(annotation['vote'], annotation['implicit_vote'])
+            annotation['pronunciation'] = Utilities::LearningUtil.get_pronunciation_by_word(annotation['translation'], lang)
+            annotation['audio_urls'] = Utilities::LearningUtil.get_audio_urls(annotation['pronunciation'], lang)
+            annotation['weighted_vote'] = Utilities::LearningUtil.get_weighted_vote(annotation['vote'], annotation['implicit_vote'])
           end
         end
       end
@@ -171,15 +171,15 @@ class LearningsController < ApplicationController
             :vote, :implicit_vote).first
     
     if !result.nil?
-      return [result['id'], result['translation'], get_weighted_vote(result['vote'], result['implicit_vote'])]
+      return [result['id'], result['translation'], Utilities::LearningUtil.get_weighted_vote(result['vote'], result['implicit_vote'])]
     end
       
     if translator == 'dict'
-      translation = translate_by_dictionary(word.word_id, word.pos_tag, lang)
+      translation = Utilities::LearningUtil.translate_by_dictionary(word.word_id, word.pos_tag, lang)
     elsif translator == 'ims'
-      translation translate_by_ims(word.text, word.position, sentence.text, lang)
+      translation = Utilities::LearningUtil.translate_by_ims(word.text, word.position, sentence.text, lang)
     elsif translator == 'bing'
-      translation = translate_by_bing(word.position, sentence.text, lang)
+      translation = Utilities::LearningUtil.translate_by_bing(word.position, sentence.text, lang)
     end
     
     # save 
@@ -189,103 +189,6 @@ class LearningsController < ApplicationController
         translator: translator, lang:lang, vote: 0)
       mt.save
       return [mt.id, translation, 0]
-    end
-  end
-  
-  
-  # English -> Chinese
-  def translate_by_dictionary(word_id, word_pos, lang)
-    if lang==Utilities::Lang::CODE[:Chinese] and POS_INDEX.has_key?(word_pos)
-      translation_id = EnglishChineseTranslation.where('english_vocabulary_id=? AND pos_tag=? AND frequency_rank=0', word_id, POS_INDEX[word_pos]).pluck(:chinese_vocabulary_id)
-      if !translation_id.nil?
-        translation = ChineseVocabulary.where(id: translation_id).pluck(:text).first
-        return translation
-      end
-    end
-  end
-  
-  
-  # English -> Chinese
-  # word_position is [start_character_index, end_character_index] for the word in sentence
-  def translate_by_bing(word_position, sentence, lang)
-    if lang==Utilities::Lang::CODE[:Chinese]
-      translation = Bing.translate_word(word_position, sentence, 'en', 'zh-CHS')
-      return translation
-    end
-  end
-  
-  # TODO
-  def translate_by_ims(word, word_position, sentence, lang)
-    if lang==Utilities::Lang::CODE[:Chinese]
-      return Utilities::ImsTranslator.translate(word, word_position, sentence)
-    end    
-  end
-
-  # TODO: design the rule
-  # view/test/skip the word based on user's learning history
-  def get_learn_type(user_id, pair_id, lang)
-    learning_history = LearningHistory.where(user_id: user_id, translation_pair_id: pair_id, lang: lang).first
-    if learning_history.nil?
-      history = LearningHistory.new(user_id: user_id, translation_pair_id: pair_id, 
-                                      lang: lang, view_count: 0, test_count: 0)
-      history.save
-      return 'view'
-    elsif learning_history.test_count>=QUIZ_FREQUENCY_COUNT_MAX  # user knows this word well
-      return 'skip'
-    elsif learning_history.test_count==0 and learning_history.view_count<VIEW_COUNT_MAX
-      return 'view'
-    else
-      return 'test'
-    end
-  end
-  
-  
-  # Return nil if the word is not stored in database
-  def get_word_id(word, lang)
-    if !word.nil?
-      if lang==Utilities::Lang::CODE[:Chinese]
-        return ChineseVocabulary.where(text: word).pluck(:id).first
-      elsif lang==Utilities::Lang::CODE[:English]
-        return EnglishVocabulary.where(text: word).pluck(:id).first
-      end
-    end
-  end
-  
-  
-  def get_translation_pair_id(source_word_id, target_word_id, target_lang)
-    if target_lang==Utilities::Lang::CODE[:Chinese]
-      return EnglishChineseTranslation.where(english_vocabulary_id: source_word_id, chinese_vocabulary_id: target_word_id).pluck(:id).first
-    end
-  end
-  
-  
-  def get_pronunciation_by_word_id(word_id, lang)
-    if !word_id.nil?
-      if lang==Utilities::Lang::CODE[:Chinese]
-        return ChineseVocabulary.where(id: word_id).pluck(:pronunciation).first
-      end
-    end
-  end
-  
-  
-  def get_pronunciation_by_word(word, lang)
-    if !word.nil?
-      if lang==Utilities::Lang::CODE[:Chinese]
-        return ChineseVocabulary.where(text: word).pluck(:pronunciation).first
-      end
-    end
-  end
-  
-
-  def get_audio_urls(pronunciation, lang)
-    if !pronunciation.nil?
-      if lang==Utilities::Lang::CODE[:Chinese]
-        urls = []
-        pronunciation.split.each do |pinyin|
-          urls.push(CHINESE_AUDIO_HOST + '/' + pinyin + '.mp3')
-        end
-        return urls
-      end
     end
   end
   
@@ -402,10 +305,5 @@ class LearningsController < ApplicationController
     end
   end
   
-  
-  # TODO: Change this if a new rule is designed
-  def get_weighted_vote(explicit_vote, implicit_vote)
-    return explicit_vote + 0.1 * implicit_vote
-  end
   
 end

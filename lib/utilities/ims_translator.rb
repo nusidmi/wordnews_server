@@ -6,7 +6,8 @@ module Utilities::ImsTranslator
   
   def self.translate(word, word_position, sentence)
     sentence = sentence[0..(word_position[0]-1)] + @@IMS_FLAG + sentence[word_position[0]..-1]
-    params = {"sentence": sentence, 'word': word}
+    params = {"sentence": sentence, "word": word}
+    #params = {:sentence=>sentence, :word=>word}
     response = HTTParty.post(IMS_HOST+'/translate_word', :query=>params)
     
     if response.code!=200 or response.body==''
@@ -14,7 +15,10 @@ module Utilities::ImsTranslator
       return
     end
     
-    result = JSON.parse(response.body)
+    #result = JSON.parse(response.body)
+    puts '-----ims ' + response.body
+    puts word
+    puts sentence
     if result['msg']=='OK'
       return result['translation']
     end

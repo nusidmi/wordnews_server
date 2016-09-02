@@ -1,8 +1,8 @@
-module Bing
+module Utilities::Bing
 	# Specify all arguments
 	
 	# Translate paragraphs
-	def Bing.translate(texts, from, to)
+	def self.translate(texts, from, to)
 		if !ENV["bingid"].present? || !ENV["bingkey"].present? || !ENV["bingaccount"].present?
 			Rails.logger.warn "Bing_translator: Init failed. env missing"
 			return false
@@ -26,12 +26,10 @@ module Bing
 	
 	# Translate one word in a sentence
 	# English -> Chinese
-	def Bing.translate_word(word_position, sentence, from, to)
+	def self.translate_word(word_position, sentence, from, to)
 		if !ENV["bingid"].present? || !ENV["bingkey"].present? || !ENV["bingaccount"].present?
 			Rails.logger.warn "Bing_translator: Init failed. env missing"
 		end
-			
-			
 
 		begin
 		
@@ -76,14 +74,14 @@ module Bing
 	end
 	
 
-	def speak(text, language)
+	def self.speak(text, language)
 		audio = translator.speak text, :language => language, :format => 'audio/mp3', :options => 'MaxQuality'
 		open(text+'.mp3', 'wb') { |f| f.write audio }
 		translator.balance # => 20000
 
 	end
 
-	def get_access_token
+	def self.get_access_token
 	  begin
 	    translator = BingTranslator.new('YOUR_CLIENT_ID', 'YOUR_CLIENT_SECRET', false, 'AZURE_ACCOUNT_KEY')
 	    token = translator.get_access_token
@@ -96,7 +94,7 @@ module Bing
 	end
 	
 	
-	def parse_alignment_string(alignments)
+	def self.parse_alignment_string(alignments)
     aligned_positions = Hash.new
     alignments.split(' ').each do |mapping|
       lhs = mapping.split('-')[0]
