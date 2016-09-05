@@ -288,7 +288,8 @@ class LearningsController < ApplicationController
       success = false
       if params[:answer]=='correct'
         success = learning_history.increment!(:test_count)
-      elsif params[:answer]=='wrong'
+      # penalty for wrong answer
+      elsif params[:answer]=='wrong' and learning_history.test_count>0
         success = learning_history.decrement!(:test_count)
       end
 
