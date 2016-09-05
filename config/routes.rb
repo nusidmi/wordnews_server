@@ -8,6 +8,7 @@ TranslateApp::Application.routes.draw do
   resources :annotations
   resources :articles
 
+  # Old API
   match '/show_by_dictionary', to: 'translates#replacements_by_dictionary', via: :post
   match '/show', to: 'translates#replacements_by_bing', via: :post
   match '/show_multiple', to: 'translates#replacements_multiple_paragraphs_by_bing', via: :post
@@ -24,6 +25,7 @@ TranslateApp::Application.routes.draw do
   
   
   # TODO: get -> post
+  # annotation
   match '/create_annotation', to: 'annotations#create', via: [:get,:post]
   match '/delete_annotation', to: 'annotations#destroy', via: [:get, :post]
   match '/update_annotation', to: 'annotations#update_translation', via: [:get, :post]
@@ -40,9 +42,14 @@ TranslateApp::Application.routes.draw do
   match '/view', to: 'learnings#view', via: :post
   match '/take_quiz', to:'learnings#take_quiz', via: :post
   
+  
+  # feedback
   match '/vote', to: 'feedbacks#vote', via: [:get, :post]
 
 
+  # test API
+  match '/show_learn_words_demo', to: 'demos#show_learn_words', via: :post
+  
 
   match '/create_new_user', to: 'users#create_new_user', via: :get
 

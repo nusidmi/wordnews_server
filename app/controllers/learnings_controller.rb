@@ -5,8 +5,6 @@ require 'set'
 
 class LearningsController < ApplicationController
 
-  # Params: lang, text in the paragraph, and paragraph index
-  # Return: {[word, translation, paragraph_index, word_index]
   def show_learn_words
     if !params[:lang].present? or !params[:translator].present? or 
       !params[:num_of_words].present? or !params[:user_id].present? or
@@ -195,35 +193,11 @@ class LearningsController < ApplicationController
   
   def generate_quiz(word, lang)
     if lang==Utilities::Lang::CODE[:Chinese]
-      return generate_quiz_chinese(word.text)
-    else
-      return nil
+      return Utilities::LearningUtil.generate_quiz_chinese(word.text)
     end
   end
   
-  
-  # TODO: remove category
-  def generate_quiz_chinese(word_text)
-    category = 'Technology'
-    level = 3
-      
-    begin
-      distractors_str = `python "public/MCQ Generation/MCQGenerator.py" #{category} #{level} #{word_text}`
-      distractors = distractors_str.split(',')
-      quiz = Hash.new
-      
-      quiz= Hash.new
-      quiz['testType'] = 
-      quiz['choices'] = Hash.new
-  
-      distractors.each_with_index { |val, idx|
-        quiz['choices'][idx.to_s] = val.strip
-      }
-      return quiz
-    rescue Exception => e
-      Rails.logger.warn "MCQGenerator.py: Error e.msg=>[" + e.message + "]"
-    end
-  end
+
   
   
   # TODO: 1) update score/level etc in user table, 2) send the updated score/rank to user

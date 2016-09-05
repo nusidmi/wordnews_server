@@ -105,4 +105,27 @@ module Utilities::LearningUtil
   end
   
   
+   # TODO: remove category
+  def self.generate_quiz_chinese(word_text)
+    category = 'Technology'
+    level = 3
+      
+    begin
+      distractors_str = `python "public/MCQ Generation/MCQGenerator.py" #{category} #{level} #{word_text}`
+      distractors = distractors_str.split(',')
+      quiz = Hash.new
+      
+      quiz= Hash.new
+      quiz['test_type'] = 1   # 0: no type, 1: choice in english, 2: choice in chinese
+      quiz['choices'] = Hash.new
+  
+      distractors.each_with_index { |val, idx|
+        quiz['choices'][idx.to_s] = val.strip
+      }
+      return quiz
+    rescue Exception => e
+      Rails.logger.warn "MCQGenerator.py: Error e.msg=>[" + e.message + "]"
+    end
+  end
+  
 end
