@@ -14,8 +14,8 @@ TranslateApp::Application.routes.draw do
   match '/show_multiple', to: 'translates#replacements_multiple_paragraphs_by_bing', via: :post
   match '/remember', to: 'translates#remember', via: :post
   match '/getQuiz', to: 'translates#quiz', via: :get
-  match '/getNumber', to: 'translates#calculate', via: :get
-  match '/displayHistory', to: 'users#display_history', via: :get
+  match '/getNumber', to: 'translates#calculate', via: :get # replaced by /show_user_learning_history
+  match '/displayHistory', to: 'users#display_history', via: :get # replaced by /show_user_words
   match '/settings', to: 'users#settings', via: :get
   match '/getSuggestURL', to: 'users#get_suggest_url', via: :get
   match '/getExampleSentences', to: 'translates#get_example_sentences', via: :get
@@ -41,6 +41,9 @@ TranslateApp::Application.routes.draw do
   match '/show_learn_words', to: 'learnings#show_learn_words', via: :post
   match '/view', to: 'learnings#view', via: :post
   match '/take_quiz', to:'learnings#take_quiz', via: :post
+  match '/show_user_learning_history', to: 'learnings#show_user_learning_history', via: :post
+  match '/show_user_words', to: 'learnings#show_user_words', via: [:get, :post]
+
   
   
   # feedback

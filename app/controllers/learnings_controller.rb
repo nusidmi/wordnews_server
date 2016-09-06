@@ -26,16 +26,14 @@ class LearningsController < ApplicationController
     title = params[:title]
     publication_date = params[:publication_date]
     
-    user = User.where(:public_key => public_key).first
-    if user.nil?
+    user_id = User.where(:public_key => public_key).pluck(:id).first
+    if user_id.nil?
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request }
       end
       return 
     end
-    user_id = user.id
-
 
     # pre-process text
     @sentences = []
@@ -280,5 +278,83 @@ class LearningsController < ApplicationController
     end
   end
   
+  
+  # statistics
+  def show_user_learning_history
+    if !params[:user_id].present? or !params[:lang].present? or !UserHandler.validate_public_key(params[:user_id])
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    
+    user = User.where(:public_key => params[:user_id]).first
+    if user.nil?
+      # response
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    
+    learning_count = LearningHistory.where('user_id=? AND lang=? AND test_count<?', user.id, params[:lang], VIEW_COUNT_MAX).count
+    learnt_count = LearningHistory.where('user_id=? AND lang=? and test_count=?',  user.id, params[:lang], QUIZ_COUNT_MAX).count
+    
+    respond_to do |format|
+      if learning_count.nil? or learnt_count.nil?
+        learning_count = learnt_count = 0
+      end
+      format.json { render json: { msg: Utilities::Message::MSG_OK, 
+                    history: {learning_count: learning_count, learnt_count: learnt_count }}, 
+                    status: :ok }
+    end
+  end
+  
+  
+  # words that user are learning
+  # TODO: audio URLs
+  def show_user_words
+    if (!params[:user_id].present? or !params[:lang].present? \
+        or !UserHandler.validate_public_key(params[:user_id]) \
+        or !params[:is_learning].present?)
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    
+    #user_id = User.where(:public_key => params[:user_id]).pluck(:id).first
+    @user = UserHandler.get_user_by_public_key(params[:user_id])
+    if @user.nil?
+      # response
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+
+    # TODO: better support other languages
+    if params[:lang]==Utilities::Lang::CODE[:Chinese]
+      if params[:is_learning]=='1' # words arelearning
+        @words = EnglishChineseTranslation.joins(:learning_histories).where('user_id=? AND lang=? AND test_count<?', 
+        @user.id, params[:lang], VIEW_COUNT_MAX)#.pluck_all(:english_text, :chinese_text, :chinese_pronunciation)
+      elsif params[:is_learning]=='0' # words have learned (passed the max number of quiz)
+        @words = EnglishChineseTranslation.joins(:learning_histories).where('user_id=? AND lang=? and test_count=?',  
+        @user.id, params[:lang], QUIZ_COUNT_MAX)#.pluck_all(:english_text, :chinese_text, :chinese_pronunciation)
+      end
+    end
+    
+    @lang = Utilities::Lang::CODE_TO_LANG[params[:lang].to_sym]
+    respond_to do |format|
+      format.html # index.html.erb
+      format.json { render json: {msg: Utilities::Message::MSG_OK, words: @words, lang: @lang, user_name: @user.user_name}, 
+                          status: :ok }
+    end
+    
+  end
   
 end

@@ -97,7 +97,7 @@ class AnnotationsController < ApplicationController
   end
   
   
-  # TODO: Move to users_controller.rb?
+  # TODO: 1. Move to users_controller.rb? 2. Add two columns in user table
   # lang is optional
   def show_user_annotation_history
     

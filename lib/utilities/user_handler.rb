@@ -100,5 +100,13 @@ module UserHandler
 
     return newUser
   end
+  
+  def UserHandler.get_user_id_by_public_key(public_key)
+    return User.where(:public_key => public_key).pluck(:id).first
+  end
+  
+  def UserHandler.get_user_by_public_key(public_key)
+    return User.where(:public_key => public_key).first
+  end
 
 end

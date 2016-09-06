@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160902030504) do
+ActiveRecord::Schema.define(:version => 20160906074501) do
 
   create_table "annotation_histories", :force => true do |t|
     t.integer  "user_id"
@@ -106,9 +106,25 @@ ActiveRecord::Schema.define(:version => 20160902030504) do
     t.integer  "frequency_rank"
     t.datetime "created_at",            :null => false
     t.datetime "updated_at",            :null => false
+    t.string   "english_text"
+    t.string   "chinese_text"
+    t.string   "chinese_pronunciation"
   end
 
   add_index "english_chinese_translations", ["english_vocabulary_id", "chinese_vocabulary_id", "pos_tag"], :name => "pair_pos_index"
+
+  create_table "english_chinese_translations_tmp", :id => false, :force => true do |t|
+    t.integer  "id"
+    t.integer  "chinese_vocabulary_id"
+    t.integer  "english_vocabulary_id"
+    t.integer  "pos_tag"
+    t.integer  "frequency_rank"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.string   "english_text"
+    t.string   "chinese_text"
+    t.string   "chinese_pronunciation"
+  end
 
   create_table "english_vocabularies", :force => true do |t|
     t.string   "text"
@@ -176,6 +192,8 @@ ActiveRecord::Schema.define(:version => 20160902030504) do
     t.datetime "updated_at",          :null => false
     t.string   "lang"
   end
+
+  add_index "learning_histories", ["user_id", "lang", "test_count"], :name => "user_history_index"
 
   create_table "machine_translations", :force => true do |t|
     t.string   "text"
