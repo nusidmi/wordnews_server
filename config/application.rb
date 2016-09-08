@@ -62,5 +62,8 @@ module TranslateApp
     #config.autoload_paths << Rails.root.join('lib')
     #config.autoload_paths += Dir["#{config.root}/lib/**/"]
     config.autoload_paths += Dir["#{config.root}/lib/**/"]
+
+    config.cache_store = :redis_store, ENV["REDISTOGO_URL"] || "redis://localhost:6379/", { expires_in: 90.minutes }
+
   end
 end

@@ -4,9 +4,9 @@ module Utilities::LearningUtil
   def self.get_word_id(word, lang)
     if !word.nil?
       if lang==Utilities::Lang::CODE[:Chinese]
-        return ChineseVocabulary.where(text: word).pluck(:id).first
+        return Utilities::ChineseVocabularyHandler.get_id_by_word( word )
       elsif lang==Utilities::Lang::CODE[:English]
-        return EnglishVocabulary.where(text: word).pluck(:id).first
+        return Utilities::EnglishVocabularyHandler.get_id_by_word( word )
       end
     end
   end
@@ -14,8 +14,7 @@ module Utilities::LearningUtil
   
   def self.get_translation_pair_id(source_word_id, target_word_id, target_lang)
     if target_lang==Utilities::Lang::CODE[:Chinese]
-      return EnglishChineseTranslation.where(english_vocabulary_id: source_word_id, 
-            chinese_vocabulary_id: target_word_id).pluck(:id).first
+      return Utilities::EnglishChineseTranslationHandler.get_trans_id_by_eng_id_and_ch_id( source_word_id, target_word_id )
     end
   end
   
@@ -36,7 +35,7 @@ module Utilities::LearningUtil
   def self.get_pronunciation_by_word_id(word_id, lang)
     if !word_id.nil?
       if lang==Utilities::Lang::CODE[:Chinese]
-        return ChineseVocabulary.where(id: word_id).pluck(:pronunciation).first
+        return Utilities::ChineseVocabularyHandler.get_pronunciation_by_id( word_id )
       end
     end
   end
@@ -45,7 +44,7 @@ module Utilities::LearningUtil
   def self.get_pronunciation_by_word(word, lang)
     if !word.nil?
       if lang==Utilities::Lang::CODE[:Chinese]
-        return ChineseVocabulary.where(text: word).pluck(:pronunciation).first
+        return Utilities::ChineseVocabularyHandler.get_pronunciation_by_word( word)
       end
     end
   end
@@ -73,9 +72,9 @@ module Utilities::LearningUtil
    # English -> Chinese
   def self.translate_by_dictionary(word_id, word_pos, lang)
     if lang==Utilities::Lang::CODE[:Chinese] and POS_INDEX.has_key?(word_pos)
-      translation_id = EnglishChineseTranslation.where('english_vocabulary_id=? AND pos_tag=? AND frequency_rank=0', word_id, POS_INDEX[word_pos]).pluck(:chinese_vocabulary_id)
+      translation_id = Utilities::EnglishChineseTranslationHandler.get_cn_id_by_en_id_and_postag( word_id, POS_INDEX[word_pos])
       if !translation_id.nil?
-        translation = ChineseVocabulary.where(id: translation_id).pluck(:text).first
+        translation = Utilities::ChineseVocabularyHandler.get_ch_text_by_id(translation_id)
         return translation
       end
     end

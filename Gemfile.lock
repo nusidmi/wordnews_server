@@ -115,6 +115,23 @@ GEM
     rb-readline (0.5.3)
     rdoc (3.12.2)
       json (~> 1.4)
+    redis (3.3.1)
+    redis-actionpack (3.2.4)
+      actionpack (~> 3.2.0)
+      redis-rack (~> 1.4.4)
+      redis-store (~> 1.1.4)
+    redis-activesupport (3.2.5)
+      activesupport (~> 3.2.0)
+      redis-store (~> 1.1.0)
+    redis-rack (1.4.4)
+      rack (~> 1.4.0)
+      redis-store (~> 1.1.4)
+    redis-rails (3.2.4)
+      redis-actionpack (~> 3.2.4)
+      redis-activesupport (~> 3.2.4)
+      redis-store (~> 1.1.4)
+    redis-store (1.1.7)
+      redis (>= 2.2)
     rubyzip (1.2.0)
     sass (3.4.22)
     sass-rails (3.2.6)
@@ -179,6 +196,8 @@ DEPENDENCIES
   rails (= 3.2.3)
   randumb
   rb-readline
+  redis
+  redis-rails
   sass-rails (~> 3.2.3)
   savon (~> 2.10.0)
   test-unit
