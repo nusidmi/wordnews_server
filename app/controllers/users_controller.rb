@@ -36,6 +36,7 @@ class UsersController < ApplicationController
   end
 
   # TODO: receive language as a parameter
+  # Deprecated: Replaced by the API in learnings_controller.
   def display_history
 
     public_key = params[:user_id]
@@ -221,7 +222,9 @@ class UsersController < ApplicationController
 
     user = UserHandler.create_new_user()
     if !user.nil?
-      result['user_id'] = user.public_key.to_i
+      result['user']['user_id'] = user.public_key.to_i
+      result['user']['rank'] = user.rank
+      result['user']['score'] = user.score
       result['msg'] =  Utilities::Message::MSG_OK
     else
       result['msg'] =  Utilities::Message::MSG_CREATE_FAILURE
