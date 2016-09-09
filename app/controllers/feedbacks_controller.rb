@@ -13,7 +13,7 @@ class FeedbacksController < ApplicationController
     end
     
     if params[:source]=='0'
-      @translation = MachineTranslation.find_by_id(params[:translation_pair_id])
+      @translation = Utilities::MachineTranslationHandler.get_translation_by_id(params[:translation_pair_id])
     elsif params[:source]=='1'
       @translation = Annotation.find_by_id(params[:translation_pair_id])
     else

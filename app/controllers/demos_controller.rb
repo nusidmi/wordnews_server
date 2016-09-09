@@ -1,5 +1,5 @@
 class DemosController < ApplicationController
-  
+
   # generate some dummy data to test frontend
   def show_learn_words
     @words_to_learn = []
@@ -50,9 +50,8 @@ class DemosController < ApplicationController
  
 
   def get_dict_translation(word)
-    translation_id = EnglishChineseTranslation.where('english_vocabulary_id=? AND pos_tag=? AND frequency_rank=0', 
-                    word.word_id, POS_INDEX[word.pos_tag]).pluck(:chinese_vocabulary_id)
-    translation = ChineseVocabulary.where(id: translation_id).pluck(:text).first
+    translation_id = Utilities::EnglishChineseTranslationHandler.get_cn_id_by_en_id_and_postag( word.word_id, POS_INDEX[word.pos_tag])
+    translation = Utilities::ChineseVocabularyHandler.get_ch_text_by_id(translation_id)
     return [translation_id, translation]
   end
   

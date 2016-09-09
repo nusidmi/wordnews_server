@@ -48,6 +48,8 @@ gem 'bcrypt-ruby', '~> 3.0.0'
 
 gem  "httparty"
 
+gem 'redis'
+gem 'redis-rails'
 
 # ruby NLP
 #gem 'birch', :git=>"https://github.com/faustoct/birch.git"
