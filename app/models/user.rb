@@ -1,7 +1,11 @@
 class User < ActiveRecord::Base
   attr_accessor :remember_token, :reset_token
 
-  attr_accessible :user_name, :email, :password_digest, :public_key, :fb_id, :gp_id, :twitter_id, :score, :avatar, :role, :rank, :status, :trans_count, :anno_count
+  attr_accessible :user_name, :email, :avatar, :status, 
+                  :password_digest, :public_key, :fb_id, :gp_id, :twitter_id, 
+                  :role, :score, :rank,
+                  :view_count, :quiz_count, :learning_count, :learnt_count, 
+                  :annotation_count
   validates :user_name, length: { maximum: 255 }
 
   validates :email, length: { maximum: 255 }

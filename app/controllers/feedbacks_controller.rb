@@ -24,10 +24,10 @@ class FeedbacksController < ApplicationController
       return
     end
 
-    @user = User.where(:public_key => params[:user_id]).first
+    user = User.where(:public_key => params[:user_id]).first
     score = params[:score].to_i
 
-    if @user.nil? or @translation.nil?
+    if user.nil? or @translation.nil?
       respond_to do |format|
         format.json { render json: {msg: Utilities::Message::MSG_NOT_FOUND}, 
                       status: :bad_request}
@@ -35,35 +35,31 @@ class FeedbacksController < ApplicationController
       return
     end
     
-    success = true
+    is_explicit = (params[:is_explicit]==1)? true: false
+    vote_history = VoteHistory.where(user_id: user.id, pair_id: params[:translation_pair_id],
+            source: TRANSLATION_SOURCE[params[:source]], is_explicit: is_explicit).first
     
-    # explicit rating 
-    if params[:is_explicit]=='1'
-      VoteHistory.transaction do
-        vote_history = VoteHistory.where(user_id: @user.id, pair_id: params[:translation_pair_id],
-            source: TRANSLATION_SOURCE[params[:source]], is_explicit: true).first
-        if vote_history.nil?
-          vote_history = VoteHistory.new(pair_id: @translation.id, user_id: @user.id, 
-                vote: score, source: TRANSLATION_SOURCE[params[:source]], is_explicit: true)
-          success &&= vote_history.save 
+    success = true
+    VoteHistory.transaction do
+      if vote_history.nil?
+        vote_history = VoteHistory.new(pair_id: @translation.id, user_id: user.id, 
+          vote: score, source: TRANSLATION_SOURCE[params[:source]], is_explicit: is_explicit)
+        success &&= vote_history.save
+        if is_explicit
           success &&= @translation.update_attribute(:vote, @translation.vote+score)
-        elsif vote_history.vote!=score
-            success &&= @translation.update_attribute(:vote, @translation.vote+score-@vote_history.vote)
-            success &&= vote_history.update_attribute(:vote, score)
-        end
-      end
-    # implicit rating
-    elsif params[:is_explicit]=='0'
-      VoteHistory.transaction do
-        vote_history = VoteHistory.where(user_id: @user.id, pair_id: params[:translation_pair_id],
-            source: TRANSLATION_SOURCE[params[:source]], is_explicit: false).first
-        # not a duplicate clicking 
-        if vote_history.nil?
-          vote_history = VoteHistory.new(pair_id: @translation.id, user_id: @user.id, 
-                vote: score, source: TRANSLATION_SOURCE[params[:source]], is_explicit: false)
-          success &&= vote_history.save
+          user.vote_count += 1
+          user.score += Utilities::UserLevel.get_score(:explict_vote)
+          user.rank += Utilities::UserLevel.upgrade_rank(user)
+          success &&= user.update_attributes(vote_count: user.vote_count, score: user.score, rank: user.rank)
+        else
           success &&= @translation.increment!(:implicit_vote)
+          user.score += Utilities::UserLevel.get_score(:implicit_vote)
+          user.rank += Utilities::UserLevel.upgrade_rank(user)
+          success &&= user.update_attributes(score: user.score, rank: user.rank)
         end
+      elsif is_explicit and vote_history.vote!=score
+        success &&= @translation.update_attribute(:vote, @translation.vote+score-@vote_history.vote)
+        success &&= vote_history.update_attribute(:vote, score)
       end
     end
     

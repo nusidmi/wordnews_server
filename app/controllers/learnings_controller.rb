@@ -191,17 +191,14 @@ class LearningsController < ApplicationController
   
   def generate_quiz(word, lang)
     if lang==Utilities::Lang::CODE[:Chinese]
-      return Utilities::LearningUtil.generate_quiz_chinese(word.text)
+      return Utilities::LearningUtil.generate_quiz_chinese(word)
     end
   end
   
-
   
-  
-  # TODO: 1) update score/level etc in user table, 2) send the updated score/rank to user
   def view
-    if !params[:user_id].present? or !params[:translation_pair_id]
-       respond_to do |format|
+    if !params[:user_id].present? or !params[:translation_pair_id].present? or !params[:lang]
+      respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request }
       end
@@ -210,7 +207,6 @@ class LearningsController < ApplicationController
     
     user = User.where(:public_key => params[:user_id]).first
     if user.nil?
-      # response
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request }
@@ -218,26 +214,51 @@ class LearningsController < ApplicationController
       return 
     end
     
-    learning_history = LearningHistory.where(user_id: user.id, translation_pair_id: params[:translation_pair_id]).first
-    if !learning_history.nil?
-      if learning_history.increment!(:view_count)
-        respond_to do |format|
-          format.json { render json: {msg: Utilities::Message::MSG_OK}, status: :ok }
-        end
+    learning_history = LearningHistory.where(
+      user_id: user.id, 
+      translation_pair_id: params[:translation_pair_id],   
+      lang: params[:lang]).first
+      
+    success = true
+    LearningHistory.transaction do
+      if !learning_history.nil?
+        success &&= learning_history.increment!(:view_count)
+      else
+        learning_history = LearningHistory.new(
+          user_id: user.id, 
+          translation_pair_id: params[:translation_pair_id],
+          lang: params[:lang], 
+          view_count:1)
+          
+        success &&= learning_history.save
+        user.learning_count += 1
       end
-      return
+      
+      user.view_count += 1
+      user.score += Utilities::UserLevel.get_score(:view)
+      user.rank += Utilities::UserLevel.upgrade_rank(user)
+      success &&= user.update_attributes(view_count: user.view_count, 
+                                         score: user.score, 
+                                         rank: user.rank,
+                                         learning_count: user.learning_count)
     end
     
     respond_to do |format|
-      format.json { render json: {msg: Utilities::Message::MSG_UPDATE_FAIL}, status: :ok }
+      if success
+        format.json { render json: {msg: Utilities::Message::MSG_OK, user: {score: user.score, rank: user.rank}}, 
+                      status: :ok }
+      else
+        format.json { render json: {msg: Utilities::Message::MSG_UPDATE_FAIL}, status: :ok }
+      end
     end
+   
   end
   
   
-  # TODO: 1) update score/level etc in user table, 2) send the updated score/rank to user?
-  # If the user fails the test, decrease the test_count in his learning_history; otherwise, increase
+  # TODO: If the user fails the test, decrease the test_count in his learning_history?
   def take_quiz
-    if !params[:user_id].present? or !params[:translation_pair_id].present? or !params[:answer].present?
+    if !params[:user_id].present? or !params[:translation_pair_id].present? or\
+       !params[:answer].present? or !params[:lang].present?
        respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request }
@@ -247,7 +268,6 @@ class LearningsController < ApplicationController
     
     user = User.where(:public_key => params[:user_id]).first
     if user.nil?
-      # response
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request }
@@ -255,33 +275,51 @@ class LearningsController < ApplicationController
       return 
     end
     
-    learning_history = LearningHistory.where(user_id: user.id, translation_pair_id: params[:translation_pair_id]).first
+    learning_history = LearningHistory.where(
+      user_id: user.id, 
+      translation_pair_id: params[:translation_pair_id],
+      lang: params[:lang]).first
+      
+    success = false
     if !learning_history.nil?
-      success = false
+      success = true
       if params[:answer]=='correct'
-        success = learning_history.increment!(:test_count)
-      # penalty for wrong answer
-      elsif params[:answer]=='wrong' and learning_history.test_count>0
-        success = learning_history.decrement!(:test_count)
-      end
-
-      if success
-        respond_to do |format|
-          format.json { render json: {msg: Utilities::Message::MSG_OK}, status: :ok }
+        success &&= learning_history.increment!(:test_count)
+        user.quiz_count += 1
+        user.score += Utilities::UserLevel.get_score(:pass_quiz)
+        user.rank += Utilities::UserLevel.upgrade_rank(user)
+        if learning_history.test_count+1 == QUIZ_COUNT_MAX
+          user.learning_count -= 1
+          user.learnt_count += 1
         end
-        return
+          
+        success &&= user.update_attributes(view_count: user.view_count, 
+                                           score: user.score, 
+                                           rank: user.rank,
+                                           learning_count: user.learning_count,
+                                           learnt_count: user.learnt_count)
       end
+      # TODO: need penalty for wrong answer?
+      #elsif params[:answer]=='wrong' and learning_history.test_count>0
+      #  success = learning_history.decrement!(:test_count)
+      # end
     end
     
     respond_to do |format|
-      format.json { render json: {msg: Utilities::Message::MSG_UPDATE_FAIL}, status: :ok }
+      if success
+        format.json { render json: {msg: Utilities::Message::MSG_OK, 
+                      user: {score: user.score, rank: user.rank}}, status: :ok }
+      else
+        format.json { render json: {msg: Utilities::Message::MSG_UPDATE_FAIL}, status: :ok }
+      end
     end
   end
   
   
   # statistics
   def show_user_learning_history
-    if !params[:user_id].present? or !params[:lang].present? or !UserHandler.validate_public_key(params[:user_id])
+    if !params[:user_id].present? or !params[:lang].present? \
+      or !UserHandler.validate_public_key(params[:user_id])
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request }
@@ -299,21 +337,18 @@ class LearningsController < ApplicationController
       return 
     end
     
-    learning_count = LearningHistory.where('user_id=? AND lang=? AND test_count<?', user.id, params[:lang], VIEW_COUNT_MAX).count
-    learnt_count = LearningHistory.where('user_id=? AND lang=? and test_count=?',  user.id, params[:lang], QUIZ_COUNT_MAX).count
+    #learning_count = LearningHistory.where('user_id=? AND lang=? AND test_count<?', user.id, params[:lang], VIEW_COUNT_MAX).count
+    #learnt_count = LearningHistory.where('user_id=? AND lang=? and test_count=?',  user.id, params[:lang], QUIZ_COUNT_MAX).count
     
     respond_to do |format|
-      if learning_count.nil? or learnt_count.nil?
-        learning_count = learnt_count = 0
-      end
       format.json { render json: { msg: Utilities::Message::MSG_OK, 
-                    history: {learning_count: learning_count, learnt_count: learnt_count }}, 
+                    history: {learning_count: user.learning_count, learnt_count: user.learnt_count }}, 
                     status: :ok }
     end
   end
   
   
-  # words that user are learning
+  # words that user are learning or has learnt
   # TODO: audio URLs
   def show_user_words
     if (!params[:user_id].present? or !params[:lang].present? \
@@ -326,7 +361,6 @@ class LearningsController < ApplicationController
       return 
     end
     
-    #user_id = User.where(:public_key => params[:user_id]).pluck(:id).first
     @user = UserHandler.get_user_by_public_key(params[:user_id])
     if @user.nil?
       # response
@@ -339,7 +373,7 @@ class LearningsController < ApplicationController
 
     # TODO: better support other languages
     if params[:lang]==Utilities::Lang::CODE[:Chinese]
-      if params[:is_learning]=='1' # words arelearning
+      if params[:is_learning]=='1' # words are learning
         @words = EnglishChineseTranslation.joins(:learning_histories).where('user_id=? AND lang=? AND test_count<?', 
         @user.id, params[:lang], VIEW_COUNT_MAX)#.pluck_all(:english_text, :chinese_text, :chinese_pronunciation)
       elsif params[:is_learning]=='0' # words have learned (passed the max number of quiz)

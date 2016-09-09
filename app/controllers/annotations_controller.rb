@@ -45,14 +45,10 @@ class AnnotationsController < ApplicationController
     end
     user_id = user.id
 
-    # obtain the article id
     article_id = Utilities::ArticleUtil.get_article_id(params[:url_postfix], params[:lang])
-    
-    #@annotations = article_id.nil? ? {}: Annotation.where('user_id=? AND article_id=?', user_id, article_id)
     
     @annotations = article_id.nil? ? {}: Annotation.joins(:annotation_histories).where('annotation_histories.user_id=? AND article_id=?', user_id, article_id)
      
-      
     respond_to do |format|
       format.json { render json: {msg: Utilities::Message::MSG_OK, annotations: @annotations}, 
                     status: :ok}
@@ -248,7 +244,7 @@ class AnnotationsController < ApplicationController
       return
     end
 
-    @user = User.where(:public_key => params[:annotation][:user_id]).first
+    user = User.where(:public_key => params[:annotation][:user_id]).first
 
     # Obtain article or create if not exists
     article = Utilities::ArticleUtil.get_or_create_article(
@@ -256,18 +252,7 @@ class AnnotationsController < ApplicationController
       params[:annotation][:lang], params[:annotation][:website], 
       params[:annotation][:title], params[:annotation][:publication_date])
       
-      # if params[:annotation][:title].present?
-      #   @annotation.title = params[:annotation][:title]
-      # end
-      
-      # if params[:annotation][:publication_date].present?
-      #   @annotation.publication_date = params[:annotation][:publication_date]
-      # end
-      
-      
     @annotation = Annotation.where(
-      #ann_id: params[:annotation][:ann_id], 
-      #user_id: @user.id,
       selected_text: params[:annotation][:selected_text],
       translation: params[:annotation][:translation],
       lang: params[:annotation][:lang],
@@ -288,44 +273,38 @@ class AnnotationsController < ApplicationController
     
     @annotation_history = AnnotationHistory.new(
       client_ann_id: params[:annotation][:ann_id], 
-      user_id: @user.id,
+      user_id: user.id,
       lang: params[:annotation][:lang])
-      
+    
+    success = true
     Annotation.transaction do
-      if @annotation.save and article.increment!(:annotation_count)
-        @annotation_history.annotation_id = @annotation.id
-        if @annotation_history.save 
-          respond_to do |format|
-             format.json { render json: {msg: Utilities::Message::MSG_OK, id: @annotation.id}, status: :ok }
-          end
-          return
-        end
-      end
-      respond_to do |format|
-         format.json { render json: @annotation.errors, status: :bad_request }
-
+      success &&= @annotation.save
+      success &&= article.increment!(:annotation_count)
+      @annotation_history.annotation_id = @annotation.id
+      success &&= @annotation_history.save
+      
+      user.annotation_count += 1
+      user.score += Utilities::UserLevel.get_score(:create_annotation)
+      user.rank += Utilities::UserLevel.upgrade_rank(user)
+      success &&= user.update_attributes(annotation_count: user.annotation_count,
+                                         score: user.score,
+                                         rank: user.rank)
+    end
+    
+    respond_to do |format|
+      if success
+        format.json { render json: {
+                        msg: Utilities::Message::MSG_OK, 
+                        id: @annotation.id,
+                        user: {score: user.score, rank: user.rank}}, 
+                      status: :ok }
+      else
+        format.json { render json: @annotation.errors, status: :bad_request }
       end
     end
   end
 
 
-  # PUT /annotations/1
-  # PUT /annotations/1.json
-  # def update
-  #   @annotation = Annotation.find(params[:id])
-
-  #   respond_to do |format|
-  #     if @annotation.update_attributes(params[:annotation])
-  #       #format.html { redirect_to @annotation, notice: 'Annotation was successfully updated.' }
-  #       format.json { head :no_content }
-  #     else
-  #       #format.html { render action: "edit" }
-  #       format.json { render json: @annotation.errors, status: :unprocessable_entity }
-  #     end
-  #   end
-  # end
-  
-  
   def update_translation
     if !params[:id].present? or !params[:translation].present? or !params[:user_id].present?
       respond_to do |format|
@@ -376,10 +355,7 @@ class AnnotationsController < ApplicationController
         
   end
     
-    
 
-  # DELETE /annotations/1
-  # DELETE /annotations/1.json
   def destroy
     if !params[:id].present? or !params[:user_id].present?
       respond_to do |format|
@@ -412,20 +388,33 @@ class AnnotationsController < ApplicationController
     
     user_count = AnnotationHistory.where(annotation_id: params[:id]).count
 
-    
+    success = true
     Annotation.transaction do
-      if (user_count>1 or @annotation.destroy) and @user_history.destroy and article.decrement!(:annotation_count)
-        respond_to do |format|
+      if user_count==1  # only one user contributes to the annotation
+        @annotation.destroy
+        success &&= @annotation.destroyed?
+      end
+      
+      @user_history.destroy
+      success &&= @user_history.destroyed?
+      success &&= article.decrement!(:annotation_count)
+      
+      user.annotation_count -= 1
+      user.score += Utilities::UserLevel.get_score(:delete_annotation)
+      user.rank += Utilities::UserLevel.upgrade_rank(user)
+      success &&= user.update_attributes(annotation_count: user.annotation_count,
+                                         score: user.score,
+                                         rank: user.rank)
+    end
+    
+    respond_to do |format|
+      if success
         format.json { render json: { msg: Utilities::Message::MSG_OK}, 
                       status: :ok }
-        end
-        return
-      end
-    end
-
-    respond_to do |format|
-      format.json { render json: { msg: Utilities::Message::MSG_DELETE_FAIL },
+      else
+        format.json { render json: { msg: Utilities::Message::MSG_DELETE_FAIL},
                       status: :ok}
+      end
     end
   end
   
