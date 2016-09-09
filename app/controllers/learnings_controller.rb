@@ -243,7 +243,8 @@ class LearningsController < ApplicationController
     
     respond_to do |format|
       if success
-        format.json { render json: {msg: Utilities::Message::MSG_OK, user: {score: user.score, rank: user.rank}}, 
+        format.json { render json: {msg: Utilities::Message::MSG_OK, 
+                      user: {score: user.score, rank: user.rank}}, 
                       status: :ok }
       else
         format.json { render json: {msg: Utilities::Message::MSG_UPDATE_FAIL}, status: :ok }
