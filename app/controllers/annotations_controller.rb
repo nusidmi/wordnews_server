@@ -258,7 +258,7 @@ class AnnotationsController < ApplicationController
       lang: params[:annotation][:lang],
       paragraph_idx: params[:annotation][:paragraph_idx],
       text_idx: params[:annotation][:text_idx],
-      article_id: article.id)
+      article_id: article.id).first
       
     # TODO: consider to increase upvote when annotation exists
     if @annotaion.nil?
@@ -317,7 +317,7 @@ class AnnotationsController < ApplicationController
     @user = User.where(:public_key => params[:user_id]).first
 
     @annotation = Annotation.find_by_id(params[:id])
-    @user_history = AnnotationHistory.where(annotation_id: params[:id], user_id: @user.id)
+    @user_history = AnnotationHistory.where(annotation_id: params[:id], user_id: @user.id).first
 
     if @annotation.nil? or @user_history.nil?
       respond_to do |format|
@@ -365,11 +365,11 @@ class AnnotationsController < ApplicationController
       return
     end
 
-    @user = User.where(:public_key => params[:user_id]).first
-    @annotation = Annotation.find_by_id(params[:id])
-    @user_history = AnnotationHistory.where(annotation_id: params[:id], user_id: @user.id)
+    user = User.where(:public_key => params[:user_id]).first
+    annotation = Annotation.find_by_id(params[:id])
+    user_history = AnnotationHistory.where(annotation_id: params[:id], user_id: user.id).first
 
-    if @annotation.nil? or @user_history.nil?
+    if annotation.nil? or user_history.nil?
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_NOT_FOUND}, 
                       status: :ok }
@@ -377,7 +377,7 @@ class AnnotationsController < ApplicationController
       return
     end
     
-    article = Article.find_by_id(@annotation.article_id)
+    article = Article.find_by_id(annotation.article_id)
     if article.nil?
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_NOT_FOUND}, 
@@ -391,12 +391,12 @@ class AnnotationsController < ApplicationController
     success = true
     Annotation.transaction do
       if user_count==1  # only one user contributes to the annotation
-        @annotation.destroy
-        success &&= @annotation.destroyed?
+        annotation.destroy
+        success &&= annotation.destroyed?
       end
       
-      @user_history.destroy
-      success &&= @user_history.destroyed?
+      user_history.destroy
+      success &&= user_history.destroyed?
       success &&= article.decrement!(:annotation_count)
       
       user.annotation_count -= 1
