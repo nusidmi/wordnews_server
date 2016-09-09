@@ -162,7 +162,7 @@ class LearningsController < ApplicationController
   
   # First retrieve the translation from database. If not exits, request translator and save
   def translate(word, sentence, lang, translator, article_id)
-    result = Utilities::MachineTranslationHandler.get_id_transl_votes_by_params1( article_id, word.paragraph_index, word.word_index, translator, lang, word.text)
+    result = MachineTranslation.fetch_id_transl_votes_by_params1( article_id, word.paragraph_index, word.word_index, translator, lang, word.text)
 
     if !result.nil?
       return [result['id'], result['translation'], Utilities::LearningUtil.get_weighted_vote(result['vote'], result['implicit_vote'])]
