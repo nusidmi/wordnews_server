@@ -35,7 +35,7 @@ class FeedbacksController < ApplicationController
       return
     end
     
-    is_explicit = (params[:is_explicit]==1)? true: false
+    is_explicit = (params[:is_explicit].to_i==1)? true: false
     vote_history = VoteHistory.where(user_id: user.id, pair_id: params[:translation_pair_id],
             source: TRANSLATION_SOURCE[params[:source]], is_explicit: is_explicit).first
     
