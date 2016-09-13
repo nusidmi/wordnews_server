@@ -57,6 +57,7 @@ class FeedbacksController < ApplicationController
           user.rank += Utilities::UserLevel.upgrade_rank(user)
           success &&= user.update_attributes(score: user.score, rank: user.rank)
         end
+      # The user has voted the translation before, but changed the score.
       elsif is_explicit and vote_history.vote!=score
         success &&= @translation.update_attribute(:vote, @translation.vote+score-@vote_history.vote)
         success &&= vote_history.update_attribute(:vote, score)
