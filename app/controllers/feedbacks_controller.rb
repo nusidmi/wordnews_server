@@ -13,7 +13,7 @@ class FeedbacksController < ApplicationController
     end
     
     if params[:source]=='0'
-      @translation = Utilities::MachineTranslationHandler.get_translation_by_id(params[:translation_pair_id])
+      @translation = MachineTranslation.fetch_trans_by_id(params[:translation_pair_id])
     elsif params[:source]=='1'
       @translation = Annotation.find_by_id(params[:translation_pair_id])
     else
@@ -35,7 +35,7 @@ class FeedbacksController < ApplicationController
       return
     end
     
-    is_explicit = (params[:is_explicit]==1)? true: false
+    is_explicit = (params[:is_explicit].to_i==1)? true: false
     vote_history = VoteHistory.where(user_id: user.id, pair_id: params[:translation_pair_id],
             source: TRANSLATION_SOURCE[params[:source]], is_explicit: is_explicit).first
     
