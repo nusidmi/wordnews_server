@@ -38,9 +38,7 @@ class Utilities::Paragraph
   # TODO: get the url of nlp host from a job scheduler
   def process_text()
     params = {"mode": "text_process_pipeline", "text": @text}
-    # TODO: if the env variable does not exist
-    # if !ENV["NLP_HOST"].present? 
-    response = HTTParty.post(ENV["NLP_HOST"]+'/text_process', 
+    response = HTTParty.post(NLP_HOST+'/text_process', 
                             :body=>params.to_json, 
 				                    :headers => {'Content-Type' => 'application/json'})
     

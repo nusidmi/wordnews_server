@@ -7,8 +7,7 @@ module Utilities::ImsTranslator
   def self.translate(word, word_position, sentence)
     sentence = sentence[0..(word_position[0]-1)] + @@IMS_FLAG + sentence[word_position[0]..-1]
     params = {"sentence": sentence, "word": word}
-    # TODO: throw error is not exists
-    response = HTTParty.post(ENV["NLP_HOST"]+'/translate_word', 
+    response = HTTParty.post(IMS_HOST +'/translate_word', 
                             :body=>params.to_json, 
 				                    :headers => {'Content-Type' => 'application/json'})
 
