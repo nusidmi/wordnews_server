@@ -75,15 +75,16 @@ def text_process():
   #text = request.args.get('text', '')
   #mode = request.args.get('mode', '')
   
-  content = request.json
+  if request.json is not None:
+    content = request.json
+  elif request.form is not None:
+    content = request.form
+  else:
+     return "Invalid Parameters"
+    
   text = content['text']
   mode = content['mode']
-  
-  #print text
-  #print mode
-  
-  if text=='' or mode=='':
-     return "Invalid Parameters"
+ 
   
   result = '{}'
   if mode=='sentence_segmenter':
