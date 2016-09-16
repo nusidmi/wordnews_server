@@ -252,6 +252,7 @@ class UsersController < ApplicationController
       end
 
       @user.public_key = public_key
+      @pub_key = public_key
     else
       user_param = params[:user]
       public_key = user_param[:public_key]

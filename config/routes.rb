@@ -59,13 +59,16 @@ TranslateApp::Application.routes.draw do
   # User Management
   match '/sign_up', to: 'users#sign_up_new_user', via: [:get,:post]
   match '/sign_up_complete', to: 'users#sign_up_complete', via: :get
-  #get "sessions/new"
+
   match '/login', to: 'sessions#new', via: :get
   match '/login', to: 'sessions#create', via: :post
   match '/login_complete', to: 'sessions#login_complete', via: :get
   match '/logout', to: 'sessions#logout', via: :get
   match '/request_password_reset', to: 'PasswordResets#request_password_reset', via: [:get,:post]
   match '/password_reset/:id', to: 'PasswordResets#reset_password', via: [:get,:post]
+
+  match '/auth/:provider/callback', to: 'sessions#authenticate_social', via: :get
+  match '/auth/failure', to: 'sessions#authenticate_social_failure', via: [:get, :post]
 
 
   # The priority is based upon order of creation:

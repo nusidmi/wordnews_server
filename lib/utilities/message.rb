@@ -35,4 +35,13 @@ module Utilities::Message
     MSG_EMAIL_NOT_FOUND                         = 'This email is not registered. Use another email address or sign up to our service.'
     MSG_EMAIL_PASSWORD_NOT_CORRECT              = 'The email and password you entered don\'t match.'
 
+    # Sign up by social
+    MSG_SOCIAL_SIGNUP_ACCOUNT_ALREADY_REGISTERED    = 'This account has already be registered'
+
+    # Login by social
+    MSG_SOCIAL_LOGIN_ACCOUNT_NOT_REGISTERED     = 'This account is not registered'
+
+    # Social Error
+    MSG_SOCIAL_AUTHENTICATE_ERROR               = 'Authentication failed'
+
 end

@@ -57,4 +57,92 @@ class SessionsController < ApplicationController
     redirect_to :action => "new"
   end
 
+  def authenticate_social
+
+    params =  env["omniauth.params"]
+
+    status = params["status"].to_s
+
+    auth = env["omniauth.auth"]
+
+    if params["status"].nil?
+      flash[:error] = Utilities::Message::MSG_INVALID_PARA
+      redirect_to :action => "new", :controller => "sessions"
+      return
+    end
+
+    if status == "signup"
+      # User is attempting to SIGNUP using social account. If the social account is not associated with any user,
+      # save the info to database.
+      public_key = params["user_id"]
+
+      if !UserHandler.validate_public_key( public_key )
+        flash[:error] = Utilities::Message::MSG_INVALID_PARA
+        Rails.logger.debug "authenticate_social: [SIGNUP] Public key not found"
+        redirect_to :action => "sign_up_new_user", :user_id => public_key, :controller => "users"
+        return
+      end
+
+      user_check = User.where(:public_key => public_key).first
+      if user_check.nil?
+        Rails.logger.debug "authenticate_social: [SIGNUP] User[" + public_key.to_s + "] not found"
+        flash[:error] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
+        redirect_to :action => "sign_up_new_user", :user_id => public_key, :controller => "users"
+        return
+      end
+      user_id = user_check.id
+
+      @user_ext_login = UserExternalLogin.find_with_omniauth(auth)
+
+      if !@user_ext_login.nil?
+        Rails.logger.debug "authenticate_social: [SIGNUP] User[" + public_key.to_s + "]. This social account has already registered!"
+        flash[:info] = Utilities::Message::MSG_ACCOUNT_ALREADY_REGISTERED
+        redirect_to :action => "sign_up_new_user", :user_id => public_key, :controller => "users"
+        return
+      end
+
+      @user_ext_login = UserExternalLogin.create_with_omniauth(auth)
+
+      @user_ext_login.user_id = user_id
+      @user_ext_login.save
+
+      redirect_to :action => "sign_up_complete", :controller => "users"
+      return
+
+    elsif status == "login"
+      # User is attempting to LOGIN using social account. If the social account is not associated with any user,
+      # fail them.
+
+      @user_ext_login = UserExternalLogin.find_with_omniauth(auth)
+
+      if @user_ext_login.nil?
+        Rails.logger.debug "authenticate_social: [LOGIN] User[" + public_key.to_s + "]. This social account has not registered!"
+        flash[:info] = Utilities::Message::MSG_SOCIAL_LOGIN_ACCOUNT_NOT_REGISTERED
+        return redirect_to :action => "new", :controller => "sessions"
+      end
+
+      user = User.where(:id => @user_ext_login.user_id).first
+      if user.nil?
+        Rails.logger.debug "authenticate_social: [LOGIN] UserID[" + @user_ext_login.user_id.to_s + "] not found"
+        flash[:error] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
+        return redirect_to :action => "new", :controller => "sessions"
+      end
+
+      log_in user
+      remember user
+
+      return redirect_to :action => "login_complete"
+
+    end
+
+    # Does not fall into login/ sign up status. Some stray request? Force user back to login
+    return redirect_to :action => "new", :controller => "sessions"
+
+  end
+
+  def authenticate_social_failure
+    flash[:error] = Utilities::Message::MSG_SOCIAL_AUTHENTICATE_ERROR
+    return redirect_to :action => "new", :controller => "sessions"
+  end
+
 end

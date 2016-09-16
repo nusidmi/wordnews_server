@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160908082758) do
+ActiveRecord::Schema.define(:version => 20160913062326) do
 
   create_table "annotation_histories", :force => true do |t|
     t.integer  "user_id"
@@ -249,6 +249,24 @@ ActiveRecord::Schema.define(:version => 20160908082758) do
     t.string   "url"
   end
 
+  create_table "user_external_logins", :force => true do |t|
+    t.integer  "user_id",           :null => false
+    t.string   "ext_auth_provider", :null => false
+    t.string   "ext_user_id"
+    t.string   "name"
+    t.string   "first_name"
+    t.string   "last_name"
+    t.string   "email"
+    t.string   "login_name"
+    t.string   "oauth_token"
+    t.datetime "oauth_expires_at"
+    t.datetime "created_at",        :null => false
+    t.datetime "updated_at",        :null => false
+  end
+
+  add_index "user_external_logins", ["ext_auth_provider", "ext_user_id"], :name => "index_user_external_logins_on_ext_auth_provider_and_ext_user_id"
+  add_index "user_external_logins", ["user_id"], :name => "index_user_external_logins_on_user_id"
+
   create_table "users", :force => true do |t|
     t.string   "user_name"
     t.datetime "created_at",                      :null => false
@@ -256,9 +274,6 @@ ActiveRecord::Schema.define(:version => 20160908082758) do
     t.string   "email"
     t.string   "password_digest"
     t.integer  "public_key",                      :null => false
-    t.string   "fb_id"
-    t.string   "gp_id"
-    t.string   "twitter_id"
     t.integer  "score",            :default => 0, :null => false
     t.text     "avatar"
     t.integer  "role",             :default => 2, :null => false

@@ -27,5 +27,11 @@
 
         <%= f.submit "Sign Up!", class: "btn btn-primary" %>
     <% end %>
+    <div class="text-center">
+      <p style="text-align: center"> - OR - </p>
+      <a href="<%= social_auth_path(:facebook, "signup", @pub_key) %>" class="btn btn-block btn-social btn-facebook btn-flat"><i class="fa fa-facebook"></i>
+        Sign up with Facebook
+      </a>
+    </div>
   </div>
 </div>

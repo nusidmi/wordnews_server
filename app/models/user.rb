@@ -2,7 +2,7 @@ class User < ActiveRecord::Base
   attr_accessor :remember_token, :reset_token
 
   attr_accessible :user_name, :email, :avatar, :status, 
-                  :password_digest, :public_key, :fb_id, :gp_id, :twitter_id, 
+                  :password_digest, :public_key,
                   :role, :score, :rank,
                   :view_count, :quiz_count, :learning_count, :learnt_count, 
                   :annotation_count

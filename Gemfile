@@ -51,6 +51,12 @@ gem  "httparty"
 gem 'redis'
 gem 'redis-rails'
 
+gem 'omniauth'
+gem 'omniauth-facebook'
+
+gem "font-awesome-rails"
+gem "koala", "~> 2.2"
+
 # ruby NLP
 #gem 'birch', :git=>"https://github.com/faustoct/birch.git"
 #gem 'treat'
