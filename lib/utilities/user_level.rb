@@ -13,7 +13,8 @@ module Utilities::UserLevel
            delete_annotation: 0}
   @@rules = []
 
-  
+
+  # TODO: refine rules  
   def self.initialize_rules()
     
     # rank 1 (the default one): view translation
@@ -62,7 +63,8 @@ module Utilities::UserLevel
     
     if user.rank<@@rules.size and user.score>=@@rules[user.rank+1].score and\
       user.view_count>=@@rules[user.rank+1].view_count and\
-      user.quiz_count>=@@rules[user.rank+1].quiz_count
+      user.quiz_count>=@@rules[user.rank+1].quiz_count and\
+      user.vote_count>=@@rules[user.rank+1].vote_count
       return 1
     else
       return 0

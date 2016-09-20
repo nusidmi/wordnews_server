@@ -5,7 +5,7 @@ class User < ActiveRecord::Base
                   :password_digest, :public_key,
                   :role, :score, :rank,
                   :view_count, :quiz_count, :learning_count, :learnt_count, 
-                  :annotation_count
+                  :annotation_count, :vote_count
   validates :user_name, length: { maximum: 255 }
 
   validates :email, length: { maximum: 255 }
