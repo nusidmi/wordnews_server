@@ -79,8 +79,11 @@ module UserHandler
       newUser.role = USER_ROLE_LEARNER
       newUser.rank = USER_START_RANK
       newUser.status = USER_STATUS_NOT_BLOCKED
-      newUser.trans_count = USER_START_TRANSLATE_COUNT
-      newUser.anno_count = USER_START_ANNOTATION_COUNT
+      newUser.view_count = 0
+      newUser.quiz_count = 0
+      newUser.learning_count = USER_START_TRANSLATE_COUNT
+      newUser.learnt_count = USER_START_TRANSLATE_COUNT
+      newUser.annotation_count = USER_START_ANNOTATION_COUNT
       newUser.public_key = generate_userID()
 
       if newUser.new_record?
