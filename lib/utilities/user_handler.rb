@@ -84,6 +84,7 @@ module UserHandler
       newUser.learning_count = USER_START_TRANSLATE_COUNT
       newUser.learnt_count = USER_START_TRANSLATE_COUNT
       newUser.annotation_count = USER_START_ANNOTATION_COUNT
+      newUser.vote_count = USER_START_VOTE_COUNT
       newUser.public_key = generate_userID()
 
       if newUser.new_record?

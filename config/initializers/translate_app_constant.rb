@@ -30,6 +30,7 @@ USER_STATUS_BLOCKED                     = 0.freeze
 
 USER_START_TRANSLATE_COUNT              = 0.freeze
 USER_START_ANNOTATION_COUNT             = 0.freeze
+USER_START_VOTE_COUNT                   = 0.freeze
 
 USER_NAME_MAX_LENGTH                    = 255.freeze
 USER_EMAIL_MAX_LENGTH                   = 255.freeze

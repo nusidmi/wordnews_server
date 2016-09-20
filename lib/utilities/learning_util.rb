@@ -55,9 +55,9 @@ module Utilities::LearningUtil
   def self.get_learn_type(user_id, pair_id, lang)
     learning_history = LearningHistory.where(user_id: user_id, translation_pair_id: pair_id, lang: lang).first
     if learning_history.nil?
-      history = LearningHistory.new(user_id: user_id, translation_pair_id: pair_id, 
-                                      lang: lang, view_count: 0, test_count: 0)
-      history.save
+      #history = LearningHistory.new(user_id: user_id, translation_pair_id: pair_id, 
+      #                                lang: lang, view_count: 0, test_count: 0)
+      # history.save
       return 'view'
     elsif learning_history.test_count>=QUIZ_FREQUENCY_COUNT_MAX  # user knows this word well
       return 'skip'
