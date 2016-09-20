@@ -222,6 +222,7 @@ class UsersController < ApplicationController
 
     user = UserHandler.create_new_user()
     if !user.nil?
+      result['user'] = Hash.new
       result['user']['user_id'] = user.public_key.to_i
       result['user']['rank'] = user.rank
       result['user']['score'] = user.score
