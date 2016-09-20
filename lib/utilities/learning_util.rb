@@ -1,3 +1,5 @@
+require 'httparty'
+
 module Utilities::LearningUtil
   
   # Return nil if the word is not stored in database
@@ -125,6 +127,38 @@ module Utilities::LearningUtil
     rescue Exception => e
       Rails.logger.warn "MCQGenerator.py: Error e.msg=>[" + e.message + "]"
     end
+  end
+  
+  # knowledge_level: 1(random English alogrithm), 2(English distractors by hard algorithm), 3 (Chinese distractors by hard algorithm)
+  # news_category: Entertainment, World, Finance, Sports, Technology, Travel, or Any
+  def self.generate_quiz_chinese_new(word, word_pos, knowledge_level, news_category='Any')
+    params = {'word': word, 'word_pos': word_pos, 'knowledge_level': knowledge_level,
+              'news_category':news_category}
+    response = HTTParty.post(NLP_HOST+'/generate_quiz', 
+                        :body=>params.to_json, 
+  	                    :headers => {'Content-Type' => 'application/json'})
+  	                    
+    if response.code!=200 or response.body=='' 
+      puts 'Error in processing ' + @text
+      Rails.logger.warn "MCQ Generator: Error"
+      return []
+    end
+    
+    results = JSON.parse(response.body)
+    quiz= Hash.new
+    
+    if knowledge_level<=2
+      quiz['test_type'] = 1  # 0: no type, 1: choice in english, 2: choice in chinese
+    else
+      quiz['test_type'] = 2
+    end
+    
+    quiz['choices'] = Hash.new
+    results.each_with_index do |result, result_index|
+      quiz['choices'][idx.to_s] = result
+    end
+    
+    return quiz
   end
   
 end

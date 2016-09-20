@@ -24,7 +24,7 @@ class DemosController < ApplicationController
     word.learn_type = 'test'
     wrap_word(word)
 
-    word.quiz = Utilities::LearningUtil.generate_quiz_chinese(word.text)
+    #word.quiz = Utilities::LearningUtil.generate_quiz_chinese(word.text, word.pos_tag, )
     @words_to_learn.push(word)
     
     # response

@@ -37,7 +37,7 @@ class Utilities::Paragraph
   
   # TODO: get the url of nlp host from a job scheduler
   def process_text()
-    params = {text": @text}
+    params = {"text": @text}
     response = HTTParty.post(NLP_HOST+'/text_process', 
                             :body=>params.to_json, 
 				                    :headers => {'Content-Type' => 'application/json'})
