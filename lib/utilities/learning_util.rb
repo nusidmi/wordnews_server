@@ -109,8 +109,10 @@ module Utilities::LearningUtil
 
 
   # TODO: Change this if a new rule is designed
-  def self.get_weighted_vote(explicit_vote, implicit_vote)
-    return explicit_vote + 0.1 * implicit_vote
+  def self.get_weighted_vote(explicit_vote, implicit_vote, translate_type)
+    vote = explicit_vote + WEIGHT_IMPLICIT_VOTE * implicit_vote
+    weight = (translate_type=='machine')? 1:WEIGHT_HUMAN_ANNOTATION
+    return vote*weight
   end
   
   

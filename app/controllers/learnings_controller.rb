@@ -148,13 +148,13 @@ class LearningsController < ApplicationController
     @words_to_learn.each do |word|
       if word.learn_type=='view'
         word.annotations = Annotation.where('article_id=? AND paragraph_idx=? AND text_idx=? AND selected_text=?',
-            article_id, word.paragraph_index, word.word_index, word.text).order('vote + 0.1*implicit_vote DESC').limit(ANNOTATION_COUNT_MAX).pluck_all(:id, :translation, :vote, :implicit_vote)
+            article_id, word.paragraph_index, word.word_index, word.text).order('vote + ' + WEIGHT_IMPLICIT_VOTE.to_s + '*implicit_vote DESC').limit(ANNOTATION_COUNT_MAX).pluck_all(:id, :translation, :vote, :implicit_vote)
         if !word.annotations.nil?
           word.annotations.each do |annotation|
             annotation['pronunciation'] = Utilities::LearningUtil.get_pronunciation_by_word(annotation['translation'], lang)
             annotation['audio_urls'] = Utilities::LearningUtil.get_audio_urls(annotation['pronunciation'], lang)
             annotation['more_url'] = Utilities::LearningUtil.get_more_url(annotation['translation'], lang)
-            annotation['weighted_vote'] = Utilities::LearningUtil.get_weighted_vote(annotation['vote'], annotation['implicit_vote'])
+            annotation['weighted_vote'] = Utilities::LearningUtil.get_weighted_vote(annotation['vote'], annotation['implicit_vote'], 'human')
           end
         end
       end
@@ -167,7 +167,7 @@ class LearningsController < ApplicationController
     result = MachineTranslation.fetch_id_transl_votes_by_params1( article_id, word.paragraph_index, word.word_index, translator, lang, word.text)
 
     if !result.nil?
-      return [result['id'], result['translation'], Utilities::LearningUtil.get_weighted_vote(result['vote'], result['implicit_vote'])]
+      return [result['id'], result['translation'], Utilities::LearningUtil.get_weighted_vote(result['vote'], result['implicit_vote'], 'machine')]
     end
       
     if translator == 'dict'

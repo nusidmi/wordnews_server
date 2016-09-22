@@ -60,6 +60,7 @@ class DemosController < ApplicationController
   end
   
   
+  # TODO: Change the weight of implicit vote when rule is changed
   def get_annotations(word, article_id, lang)
     if word.learn_type=='view'
       word.annotations = Annotation.where('article_id=? AND paragraph_idx=? AND text_idx=? AND selected_text=?',
@@ -69,7 +70,7 @@ class DemosController < ApplicationController
           annotation['pronunciation'] = Utilities::LearningUtil.get_pronunciation_by_word(annotation['translation'], lang)
           annotation['audio_urls'] = Utilities::LearningUtil.get_audio_urls(annotation['pronunciation'], lang)
           annotation['more_url'] = Utilities::LearningUtil.get_more_url(annotation['translation'], lang)
-          annotation['weighted_vote'] = Utilities::LearningUtil.get_weighted_vote(annotation['vote'], annotation['implicit_vote'])
+          annotation['weighted_vote'] = Utilities::LearningUtil.get_weighted_vote(annotation['vote'], annotation['implicit_vote'], 'human')
         end
       end
     end

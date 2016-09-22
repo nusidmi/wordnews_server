@@ -35,6 +35,8 @@ USER_START_VOTE_COUNT                   = 0.freeze
 USER_NAME_MAX_LENGTH                    = 255.freeze
 USER_EMAIL_MAX_LENGTH                   = 255.freeze
 
+WEIGHT_HUMAN_ANNOTATION                 = 0.5.freeze # used to weight the overall votes
+WEIGHT_IMPLICIT_VOTE                    = 0.1.freeze
 
 POS_INDEX                               = {'NN'=>1, 'VB'=>2, 'RB'=>4, 'JJ'=>5}
 ANNOTATION_COUNT_MAX                    = 5.freeze
