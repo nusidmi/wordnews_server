@@ -24,7 +24,10 @@ class DemosController < ApplicationController
     word.learn_type = 'test'
     wrap_word(word)
 
-    #word.quiz = Utilities::LearningUtil.generate_quiz_chinese(word.text, word.pos_tag, )
+    knowledge_level = 2
+    news_category = 'Any'
+    word.quiz = Utilities::LearningUtil.generate_quiz_chinese(word.text, word.pos_tag, 
+                                                              knowledge_level, news_category)
     @words_to_learn.push(word)
     
     # response
@@ -45,6 +48,7 @@ class DemosController < ApplicationController
     word.pair_id = Utilities::LearningUtil.get_translation_pair_id(word.word_id, word.translation_id, 'zh_CN')
     word.pronunciation = Utilities::LearningUtil.get_pronunciation_by_word_id(word.translation_id, 'zh_CN')
     word.audio_urls = Utilities::LearningUtil.get_audio_urls(word.pronunciation, 'zh_CN')
+    word.more_url = Utilities::LearningUtil.get_more_url(word.translation,'zh_CN')
     
   end
  
@@ -64,6 +68,7 @@ class DemosController < ApplicationController
         word.annotations.each do |annotation|
           annotation['pronunciation'] = Utilities::LearningUtil.get_pronunciation_by_word(annotation['translation'], lang)
           annotation['audio_urls'] = Utilities::LearningUtil.get_audio_urls(annotation['pronunciation'], lang)
+          annotation['more_url'] = Utilities::LearningUtil.get_more_url(annotation['translation'], lang)
           annotation['weighted_vote'] = Utilities::LearningUtil.get_weighted_vote(annotation['vote'], annotation['implicit_vote'])
         end
       end

@@ -43,6 +43,8 @@ TRANSLATION_SOURCE                      = {'machine'=>0, 'human'=>1}
 #NLP_HOST                                = 'http://127.0.0.1:5000'
 #NLP_HOST                                = 'http://wordnews-nlp.herokuapp.com'
 NLP_HOST                                =  (ENV["NLP_HOST"].present?)? ENV["NLP_HOST"]: 'http://wordnews-nlp.herokuapp.com'
+QUIZ_HOST                               =  (ENV["QUIZ_HOST"].present?)? ENV["QUIZ_HOST"]: 'http://wordnews-nlp.herokuapp.com'
 
 CHINESE_AUDIO_HOST                      = 'http://www.chinese-tools.com/jdd/public/ct/pinyinaudio'
+CHINESE_MORE_HOST                       = 'http://www.youdao.com/w/eng'
 IMS_HOST                                = (ENV["IMS_HOST"].present?)? ENV["IMS_HOST"]: 'http://ims-translator.herokuapp.com'

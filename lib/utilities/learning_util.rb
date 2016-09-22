@@ -33,6 +33,14 @@ module Utilities::LearningUtil
     end
   end
   
+  def self.get_more_url(word, lang)
+    if !word.nil?
+      if lang==Utilities::Lang::CODE[:Chinese]
+        return CHINESE_MORE_HOST + '/' + word
+      end
+    end
+  end
+  
   
   def self.get_pronunciation_by_word_id(word_id, lang)
     if !word_id.nil?
@@ -107,7 +115,7 @@ module Utilities::LearningUtil
   
   
    # TODO: remove category
-  def self.generate_quiz_chinese(word_text)
+  def self.generate_quiz_chinese_script(word_text)
     category = 'Technology'
     level = 3
       
@@ -131,15 +139,14 @@ module Utilities::LearningUtil
   
   # knowledge_level: 1(random English alogrithm), 2(English distractors by hard algorithm), 3 (Chinese distractors by hard algorithm)
   # news_category: Entertainment, World, Finance, Sports, Technology, Travel, or Any
-  def self.generate_quiz_chinese_new(word, word_pos, knowledge_level, news_category='Any')
+  def self.generate_quiz_chinese(word, word_pos, knowledge_level, news_category='Any')
     params = {'word': word, 'word_pos': word_pos, 'knowledge_level': knowledge_level,
               'news_category':news_category}
-    response = HTTParty.post(NLP_HOST+'/generate_quiz', 
+    response = HTTParty.post(QUIZ_HOST+'/generate_quiz', 
                         :body=>params.to_json, 
   	                    :headers => {'Content-Type' => 'application/json'})
   	                    
     if response.code!=200 or response.body=='' 
-      puts 'Error in processing ' + @text
       Rails.logger.warn "MCQ Generator: Error"
       return []
     end
@@ -154,7 +161,7 @@ module Utilities::LearningUtil
     end
     
     quiz['choices'] = Hash.new
-    results.each_with_index do |result, result_index|
+    results.each_with_index do |result, idx|
       quiz['choices'][idx.to_s] = result
     end
     

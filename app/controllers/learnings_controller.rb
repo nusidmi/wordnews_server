@@ -117,10 +117,11 @@ class LearningsController < ApplicationController
               word.learn_type = Utilities::LearningUtil.get_learn_type(user_id, word.pair_id, lang) # view/test/skip
               word.pronunciation = Utilities::LearningUtil.get_pronunciation_by_word_id(word.translation_id, lang)
               word.audio_urls = Utilities::LearningUtil.get_audio_urls(word.pronunciation, lang)
+              word.more_url = Utilities::LearningUtil.get_more_url(word.translation, lang)
               
               if word.learn_type!='skip' and !word.pair_id.nil?
                 if word.learn_type=='test'
-                  word.quiz = generate_quiz(word.text, lang)
+                  word.quiz = generate_quiz(word.text, word.pos_tag, lang)
                 end
                 
                 if !word.quiz.nil? or word.learn_type=='view'                 
@@ -152,6 +153,7 @@ class LearningsController < ApplicationController
           word.annotations.each do |annotation|
             annotation['pronunciation'] = Utilities::LearningUtil.get_pronunciation_by_word(annotation['translation'], lang)
             annotation['audio_urls'] = Utilities::LearningUtil.get_audio_urls(annotation['pronunciation'], lang)
+            annotation['more_url'] = Utilities::LearningUtil.get_more_url(annotation['translation'], lang)
             annotation['weighted_vote'] = Utilities::LearningUtil.get_weighted_vote(annotation['vote'], annotation['implicit_vote'])
           end
         end
@@ -186,10 +188,10 @@ class LearningsController < ApplicationController
     end
   end
   
-  
-  def generate_quiz(word, lang)
+  # TODO: use proper knowledge_level and news_category 
+  def generate_quiz(word, word_pos, lang)
     if lang==Utilities::Lang::CODE[:Chinese]
-      return Utilities::LearningUtil.generate_quiz_chinese(word)
+      return Utilities::LearningUtil.generate_quiz_chinese(word, word_pos, 2, 'Any')
     end
   end
   
