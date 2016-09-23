@@ -24,7 +24,15 @@ module Utilities::EnglishChineseTranslationHandler
       EnglishChineseTranslation.where(english_vocabulary_id: eng_vocab_id,
                                       chinese_vocabulary_id: ch_vocab_id).pluck(:id).first
     end
-
+  end
+  
+  def self.get_ch_word_by_trans_id( pair_id)
+    # EnglishChineseTranslation.where(id: pair_id).pluck(:chinese_text).first
+    
+    hash_key = HASH_KEY_PREFIX + "_pair_id_" + pair_id.to_s
+    Rails.cache.fetch( hash_key) do
+      EnglishChineseTranslation.where(id: pair_id).pluck(:chinese_text).first
+    end
   end
 
 end

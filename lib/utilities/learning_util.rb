@@ -21,6 +21,12 @@ module Utilities::LearningUtil
   end
   
   
+  def self.get_target_word_by_translation_pair_id(pair_id, target_lang)
+    if target_lang==Utilities::Lang::CODE[:Chinese]
+       return Utilities::EnglishChineseTranslationHandler.get_ch_word_by_trans_id(pair_id)
+    end
+  end
+  
   def self.get_audio_urls(pronunciation, lang)
     if !pronunciation.nil?
       if lang==Utilities::Lang::CODE[:Chinese]
@@ -168,6 +174,17 @@ module Utilities::LearningUtil
     end
     
     return quiz
+  end
+  
+  def self.is_correct_answer(correct_word_id, choice_text, test_type, pair_id, lang)
+    if lang==Utilities::Lang::CODE[:Chinese]
+      if test_type==1 # English distractor
+        return correct_word_id==self.get_id_by_word(choice_text, lang)
+      elsif test_type==2 # Chinese distractor
+        return choice_text==self.get_target_word_by_pair_id(pair_id, lang)
+      end
+    end
+    return false
   end
   
 end

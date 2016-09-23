@@ -228,7 +228,8 @@ class LearningsController < ApplicationController
           user_id: user.id, 
           translation_pair_id: params[:translation_pair_id],
           lang: params[:lang], 
-          view_count:1)
+          view_count:1,
+          test_count:0)
           
         success &&= learning_history.save
         user.learning_count += 1
@@ -255,7 +256,7 @@ class LearningsController < ApplicationController
    
   end
   
-  
+  # TODO: API params
   # TODO: If the user fails the test, decrease the test_count in his learning_history?
   def take_quiz
     if !params[:user_id].present? or !params[:translation_pair_id].present? or\
