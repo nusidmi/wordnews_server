@@ -4,13 +4,19 @@
 <table class="table table-striped">
   <tr>
     <th>No. </th>
-    <th>Article ID</th>
+    <th>Article</th>
+    <th>Language</th>
+    <th>Publication Date</th>
   </tr>
 
-<% @urls.each_with_index  do |url, index| %>
-  <tr>
-    <td><%=index+1 %></td>
-    <td><%=url %></td>
-  </tr>
-<% end %>
+  <% @articles.each_with_index do |article, index| %>
+    <tr>
+      <td><%=index+1 %></td>
+      <td><a href='<%=article.url %>'><%= article.title %></a></td>
+      <td><%= article.lang %></td>
+      <td><%= article.publication_date %></td>
+    </tr>
+  <% end %>
 </table>
+
+<br />

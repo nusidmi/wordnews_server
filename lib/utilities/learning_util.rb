@@ -176,7 +176,7 @@ module Utilities::LearningUtil
     return quiz
   end
   
-  def self.is_correct_answer(correct_word_id, choice_text, test_type, pair_id, lang)
+  def self.get_correct_answer(correct_word_id, choice_text, test_type, pair_id, lang)
     if lang==Utilities::Lang::CODE[:Chinese]
       if test_type==1 # English distractor
         return correct_word_id==self.get_id_by_word(choice_text, lang)

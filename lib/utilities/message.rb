@@ -7,6 +7,7 @@ module Utilities::Message
     MSG_UPDATE_FAIL                             = 'Update failed'
     MSG_DELETE_FAIL                             = 'Delete failed'
     MSG_VOTE_FAIL                               = 'Vote failed'
+    MSG_INSUFFICIENT_RANK                       = 'Not enough rank'
 
 
     # /create_new_user

@@ -189,16 +189,18 @@ class AnnotationsController < ApplicationController
     
     #@annotations = article_id.nil? ? {}: Annotation.joins(:annotation_histories).where('annotation_histories.user_id=? AND article_id=?', @user.id, article_id)
 
-
+  
+    # TODO: fix bug
     if params[:lang].present?
-      @article = Article.joins(:annotation_histories, :annotations).where('user_id=? and lang=?', @user.id, params[:lang]).uniq
+      @articles = Article.joins(:annotations, :annotation_histories).where('user_id=? and lang=?', @user.id, params[:lang]).uniq
     else
-      @article = Article.joins(:annotation_histories, :annotations).where('user_id=?', @user.id).uniq
+      @articles = Article.joins(:annotations, :annotation_histories).where('user_id=?', @user.id).uniq
     end
+    
+    #puts @articles
     respond_to do |format|
       format.html # show_user_annotations.html.erb
-      format.json { render json: {msg: Utilities::Message::MSG_OK, urls: @urls}, 
-                    status: :ok}
+      format.json { render json: {msg: Utilities::Message::MSG_OK, articles: @articles}, status: :ok}
     end
   end
   
@@ -245,6 +247,14 @@ class AnnotationsController < ApplicationController
     end
 
     user = User.where(:public_key => params[:annotation][:user_id]).first
+    
+    if !Utilities::UserLevel.validate(user.rank, :annotate_news_sites)
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INSUFFICIENT_RANK}, 
+                      status: :bad_request }
+      end
+      return 
+    end
 
     # Obtain article or create if not exists
     article = Utilities::ArticleUtil.get_or_create_article(

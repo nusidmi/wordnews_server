@@ -35,6 +35,15 @@ class FeedbacksController < ApplicationController
       return
     end
     
+    
+    if !Utilities::UserLevel.validate(user.rank, :vote_translation)
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INSUFFICIENT_RANK}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    
     is_explicit = (params[:is_explicit].to_i==1)? true: false
     vote_history = VoteHistory.where(user_id: user.id, pair_id: params[:translation_pair_id],
             source: TRANSLATION_SOURCE[params[:source]], is_explicit: is_explicit).first

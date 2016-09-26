@@ -6,11 +6,19 @@ module Utilities::UserLevel
             create_annotation: 'create an annotation',
             update_annotation: 'update an annotation',
             delete_annotation: 'delete an annotation'}
+            
   
   # TODO: decrease score when delete annotation?
   SCORE = {view: 5, pass_quiz: 10, explict_vote: 5, implicit_vote: 2, 
-           create_annotation: 10, update_annotation: 0,
-           delete_annotation: 0}
+           create_annotation: 10, update_annotation: 0, delete_annotation: 0}
+           
+  
+  PRIVILEGE_MIN_RANK = {view: 1, take_quiz: 2, view_human_annotation: 3,
+                        vote_translation: 4, input_translation: 5, 
+                        annotate_news_sites: 6, annotate_any_sites: 7}
+  
+  
+  
   @@rules = []
 
 
@@ -68,6 +76,16 @@ module Utilities::UserLevel
       return 1
     else
       return 0
+    end
+  end
+  
+  # Verify whether the user has enough rank to access certain functions
+  # TODO: modify this when rule changes
+  def self.validate(rank, privillege_sym)
+    if PRIVILEGE_MIN_RANK.key?(privillege_sym)
+      return rank>=PRIVILEGE_MIN_RANK[privillege_sym]
+    else
+      return false
     end
   end
   

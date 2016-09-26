@@ -214,6 +214,14 @@ class LearningsController < ApplicationController
       return 
     end
     
+    if !Utilities::UserLevel.validate(user.rank, :view)
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INSUFFICIENT_RANK}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    
     learning_history = LearningHistory.where(
       user_id: user.id, 
       translation_pair_id: params[:translation_pair_id],   
@@ -277,6 +285,14 @@ class LearningsController < ApplicationController
       return 
     end
     
+    if !Utilities::UserLevel.validate(user.rank, :take_quiz)
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INSUFFICIENT_RANK}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    
     learning_history = LearningHistory.where(
       user_id: user.id, 
       translation_pair_id: params[:translation_pair_id],
@@ -286,6 +302,79 @@ class LearningsController < ApplicationController
     if !learning_history.nil?
       success = true
       if params[:answer]=='correct'
+        success &&= learning_history.increment!(:test_count)
+        user.quiz_count += 1
+        user.score += Utilities::UserLevel.get_score(:pass_quiz)
+        user.rank += Utilities::UserLevel.upgrade_rank(user)
+        if learning_history.test_count+1 == QUIZ_COUNT_MAX
+          user.learning_count -= 1
+          user.learnt_count += 1
+        end
+          
+        success &&= user.update_attributes(view_count: user.view_count, 
+                                           score: user.score, 
+                                           rank: user.rank,
+                                           learning_count: user.learning_count,
+                                           learnt_count: user.learnt_count)
+      end
+      # TODO: need penalty for wrong answer?
+      #elsif params[:answer]=='wrong' and learning_history.test_count>0
+      #  success = learning_history.decrement!(:test_count)
+      # end
+    end
+    
+    respond_to do |format|
+      if success
+        format.json { render json: {msg: Utilities::Message::MSG_OK, 
+                      user: {score: user.score, rank: user.rank}}, status: :ok }
+      else
+        format.json { render json: {msg: Utilities::Message::MSG_UPDATE_FAIL}, status: :ok }
+      end
+    end
+  end
+  
+  
+  # TODO: hide the correct answer on client side
+  def take_quiz_hide
+    if !params[:user_id].present? or !params[:translation_pair_id].present? or\
+       !params[:correct_word_id].present? or !params[:choice_text].present? or\
+       !params[:lang].present? or !params[:test_type].present?
+       respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    
+    user = User.where(:public_key => params[:user_id]).first
+    if user.nil?
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    
+    if !Utilities::UserLevel.validate(user.rank, :view)
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INSUFFICIENT_RANK}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    
+    is_correct = LearningUtil.is_correct_answer(params[:correct_word_id], params[:choice_text], 
+      params[:test_type].to_i, params[:translation_pair_id], params[:lang])
+    
+    learning_history = LearningHistory.where(
+      user_id: user.id, 
+      translation_pair_id: params[:translation_pair_id],
+      lang: params[:lang]).first
+      
+    success = false
+    if !learning_history.nil?
+      success = true
+      if is_correct
         success &&= learning_history.increment!(:test_count)
         user.quiz_count += 1
         user.score += Utilities::UserLevel.get_score(:pass_quiz)
