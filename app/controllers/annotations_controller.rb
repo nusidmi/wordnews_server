@@ -187,17 +187,14 @@ class AnnotationsController < ApplicationController
       return
     end
     
-    #@annotations = article_id.nil? ? {}: Annotation.joins(:annotation_histories).where('annotation_histories.user_id=? AND article_id=?', @user.id, article_id)
-
-  
-    # TODO: fix bug
     if params[:lang].present?
-      @articles = Article.joins(:annotations, :annotation_histories).where('user_id=? and lang=?', @user.id, params[:lang]).uniq
+      article_ids = Annotation.joins(:annotation_histories).where('user_id=? and lang=?', @user.id, params[:lang]).pluck(:article_id).uniq
     else
-      @articles = Article.joins(:annotations, :annotation_histories).where('user_id=?', @user.id).uniq
+      article_ids = Annotation.joins(:annotation_histories).where('user_id=?', @user.id).pluck(:article_id).uniq
     end
     
-    #puts @articles
+    @articles = Article.where(id: article_ids)
+
     respond_to do |format|
       format.html # show_user_annotations.html.erb
       format.json { render json: {msg: Utilities::Message::MSG_OK, articles: @articles}, status: :ok}
