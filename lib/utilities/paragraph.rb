@@ -6,9 +6,11 @@ require 'json'
 class Utilities::Paragraph
 #class Paragraph
 
-  def initialize (paragraph_index, text)
+  def initialize (paragraph_index, text, translator, url)
     @index = paragraph_index
     @text = text
+    @translator = translator
+    @url = url
     @sentences = []
   end
   
@@ -37,23 +39,38 @@ class Utilities::Paragraph
   
   # TODO: get the url of nlp host from a job scheduler
   def process_text()
-    params = {"text": @text}
-    response = HTTParty.post(NLP_HOST+'/text_process', 
-                            :body=>params.to_json, 
-				                    :headers => {'Content-Type' => 'application/json'})
-    
-    if response.code!=200 or response.body=='' 
-      puts 'Error in processing ' + @text
-      return []
+    hash_key = "paragraph_nlp_reply_url_" + @url.to_s + "_trans_" + @translator.to_s + "_idx_" + @index.to_s
+
+    nlp_reply =  Rails.cache.read(hash_key)
+    if nlp_reply.nil?
+      params = {"text": @text}
+      response = HTTParty.post(NLP_HOST+'/text_process',
+                               :body=>params.to_json,
+                               :headers => {'Content-Type' => 'application/json'})
+
+      if response.code!=200 or response.body==''
+        puts 'Error in processing ' + @text
+        return []
+      end
+      Rails.cache.write(hash_key, response.body)
+      results = JSON.parse(response.body)
+
+      results.each_with_index do |result, result_index|
+        s = Utilities::Sentence.new(result["sent"], result["words"], result["tags"], @index, result_index)
+        @sentences.push(s)
+      end
+
+      return @sentences
+    else
+      results = JSON.parse(nlp_reply)
+
+      results.each_with_index do |result, result_index|
+        s = Utilities::Sentence.new(result["sent"], result["words"], result["tags"], @index, result_index)
+        @sentences.push(s)
+      end
+
+      return @sentences
     end
-    
-    results = JSON.parse(response.body)
-    results.each_with_index do |result, result_index|
-      s = Utilities::Sentence.new(result["sent"], result["words"], result["tags"], @index, result_index)
-      @sentences.push(s)
-    end
-    
-    return @sentences
     
   end
   
