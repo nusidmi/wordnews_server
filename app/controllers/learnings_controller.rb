@@ -25,6 +25,7 @@ class LearningsController < ApplicationController
     website = params[:website]
     title = params[:title]
     publication_date = params[:publication_date]
+    quiz_algorithm = params[:quiz_algorithm]? params[:quiz_algorithm].present? : 'lin_distance'
     
     user_id = User.where(:public_key => public_key).pluck(:id).first
     if user_id.nil?
@@ -54,7 +55,7 @@ class LearningsController < ApplicationController
   
     article = Utilities::ArticleUtil.get_or_create_article(url, url_postfix, lang, website, title, publication_date)
     article_id = article['id']
-    @words_to_learn = select_learn_words(num_of_words, user_id, lang, translator, article_id)
+    @words_to_learn = select_learn_words(num_of_words, user_id, lang, translator, article_id, quiz_algorithm)
     
     get_annotations(article_id, lang)
     puts '@words_to_learn size ' + @words_to_learn.size().to_s
@@ -73,7 +74,7 @@ class LearningsController < ApplicationController
   # 3. no duplicate words
   # 4. omit word in phrased annotations (TODO)
   # 5. consider word difficulty level and user's knowledge level (TODO)
-  def select_learn_words(num_of_words, user_id, lang, translator, article_id)
+  def select_learn_words(num_of_words, user_id, lang, translator, article_id, quiz_algorithm)
     @sentences.shuffle!
     words_to_learn = []
     word_set = Set.new
@@ -114,14 +115,17 @@ class LearningsController < ApplicationController
 
             if !word.translation.nil? and !word.translation_id.nil?
               word.pair_id = Utilities::LearningUtil.get_translation_pair_id(word.word_id, word.translation_id, lang)
-              word.learn_type = Utilities::LearningUtil.get_learn_type(user_id, word.pair_id, lang) # view/test/skip
+              learn_test_type = Utilities::LearningUtil.get_learn_type(user_id, word.pair_id, lang) # view/test/skip
+              word.learn_type = learn_test_type[0]
+              word.test_type = learn_test_type[1]
+              
               word.pronunciation = Utilities::LearningUtil.get_pronunciation_by_word_id(word.translation_id, lang)
               word.audio_urls = Utilities::LearningUtil.get_audio_urls(word.pronunciation, lang)
               word.more_url = Utilities::LearningUtil.get_more_url(word.translation, lang)
               
               if word.learn_type!='skip' and !word.pair_id.nil?
                 if word.learn_type=='test'
-                  word.quiz = generate_quiz(word.text, word.pos_tag, lang)
+                  word.quiz = generate_quiz(quiz_algorithm, word.text, word.pos_tag, lang, word.test_type)
                 end
                 
                 if !word.quiz.nil? or word.learn_type=='view'                 
@@ -188,10 +192,15 @@ class LearningsController < ApplicationController
     end
   end
   
-  # TODO: use proper knowledge_level and news_category 
-  def generate_quiz(word, word_pos, lang)
+  # TODO: use proper news_category 
+  # TODO: continue this
+  def generate_quiz(algorithm, word, word_pos, lang, test_type)
     if lang==Utilities::Lang::CODE[:Chinese]
-      return Utilities::LearningUtil.generate_quiz_chinese(word, word_pos, 2, 'Any')
+      if algorithm=='lin_distance'
+        return Utilities::LearningUtil.generate_quiz_chinese(word, word_pos, test_type, 'Any')
+      elsif algorithm=='recent'
+        return Utilities::LearningUtil.generate_recent_quiz_chinese(user_id, test_type)
+      end
     end
   end
   

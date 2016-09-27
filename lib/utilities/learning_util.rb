@@ -68,19 +68,19 @@ module Utilities::LearningUtil
   
   # TODO: design the rule
   # view/test/skip the word based on user's learning history
+  # TODO: return test_type 
   def self.get_learn_type(user_id, pair_id, lang)
     learning_history = LearningHistory.where(user_id: user_id, translation_pair_id: pair_id, lang: lang).first
     if learning_history.nil?
-      #history = LearningHistory.new(user_id: user_id, translation_pair_id: pair_id, 
-      #                                lang: lang, view_count: 0, test_count: 0)
-      # history.save
-      return 'view'
+      return ['view', 0]
     elsif learning_history.test_count>=QUIZ_FREQUENCY_COUNT_MAX  # user knows this word well
-      return 'skip'
+      return ['skip', 0]
     elsif learning_history.test_count==0 and learning_history.view_count<VIEW_COUNT_MAX
-      return 'view'
+      return ['view', 0]
+    elsif learning_history.test_count<=QUIZ_FREQUENCY_COUNT_MAX/2
+      return ['test', 1] # English distractors
     else
-      return 'test'
+      return ['test', 2] # Chinese distractors
     end
   end
   
@@ -147,27 +147,22 @@ module Utilities::LearningUtil
   
   # knowledge_level: 1(random English alogrithm), 2(English distractors by hard algorithm), 3 (Chinese distractors by hard algorithm)
   # news_category: Entertainment, World, Finance, Sports, Technology, Travel, or Any
-  def self.generate_quiz_chinese(word, word_pos, knowledge_level, news_category='Any')
-    params = {'word': word, 'word_pos': word_pos, 'knowledge_level': knowledge_level,
+  def self.generate_quiz_chinese(word, word_pos, test_type, news_category='Any')
+    params = {'word': word, 'word_pos': word_pos, 'test_type': test_type,
               'news_category':news_category}
     response = HTTParty.post(QUIZ_HOST+'/generate_quiz', 
                         :body=>params.to_json, 
   	                    :headers => {'Content-Type' => 'application/json'})
   	                    
-    if response.code!=200 or response.body=='' 
+    if response.code!=200 or response.body=='' or response.body=='Invalid Parameters'
       Rails.logger.warn "MCQ Generator: Error"
       return []
     end
     
     results = JSON.parse(response.body)
+    
     quiz= Hash.new
-    
-    if knowledge_level<=2
-      quiz['test_type'] = 1  # 0: no type, 1: choice in english, 2: choice in chinese
-    else
-      quiz['test_type'] = 2
-    end
-    
+    quiz['test_type'] = test_type  # 0: no type, 1: choice in english, 2: choice in chinese
     quiz['choices'] = Hash.new
     results.each_with_index do |result, idx|
       quiz['choices'][idx.to_s] = result
@@ -175,6 +170,19 @@ module Utilities::LearningUtil
     
     return quiz
   end
+  
+  # Use the most recent learned three words as the distractors
+  def self.generate_recent_quiz_chinese(user_id, test_type)
+    pair_ids = LearningHistory.where(user_id: user_id).order('updated_at desc').limit(3)
+    if test_type==2
+      distractors = EnglishChineseTranslation.where(id: pair_ids).pluck(:chinese_text)
+    else
+      distractors = EnglishChineseTranslation.where(id: pair_ids).pluck(:english_text)
+    end
+    return distractors
+  end
+  
+  
   
   def self.get_correct_answer(correct_word_id, choice_text, test_type, pair_id, lang)
     if lang==Utilities::Lang::CODE[:Chinese]
