@@ -67,7 +67,7 @@ class DemosController < ApplicationController
           article_id, word.paragraph_index, word.word_index, word.text).order('vote + 0.1*implicit_vote DESC').limit(ANNOTATION_COUNT_MAX).pluck_all(:id, :translation, :vote, :implicit_vote)
       if !word.annotations.nil?
         word.annotations.each do |annotation|
-          annotation['pronunciation'] = Utilities::LearningUtil.get_pronunciation_by_word(annotation['translation'], lang)
+          annotation['pronunciation'] = Utilities::AnnotationUtil.get_pronunciation_by_word(annotation['translation'], lang)
           annotation['audio_urls'] = Utilities::LearningUtil.get_audio_urls(annotation['pronunciation'], lang)
           annotation['more_url'] = Utilities::LearningUtil.get_more_url(annotation['translation'], lang)
           annotation['weighted_vote'] = Utilities::LearningUtil.get_weighted_vote(annotation['vote'], annotation['implicit_vote'], 'human')
