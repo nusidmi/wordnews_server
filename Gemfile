@@ -58,6 +58,8 @@ gem "font-awesome-rails"
 gem "koala", "~> 2.2"
 
 gem 'chinese_pinyin'
+gem 'puma'
+gem "rack-timeout"
 
 
 # ruby NLP
