@@ -166,7 +166,6 @@ class AnnotationsController < ApplicationController
   end
   
   
-  # TODO: join the article table to obtain the full url
   # All the annotated urls done by a user
   # lang is optional
   def show_user_urls

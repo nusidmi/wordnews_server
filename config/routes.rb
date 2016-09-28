@@ -19,7 +19,6 @@ TranslateApp::Application.routes.draw do
   match '/settings', to: 'users#settings', via: :get
   match '/getSuggestURL', to: 'users#get_suggest_url', via: :get
   match '/getExampleSentences', to: 'translates#get_example_sentences', via: :get
-  match '/log', to: 'users#log', via: :post
   # TODO change this url
   match '/validate_google_id_token', to: 'users#validate_google_id_token', via: [:get, :post]
   
@@ -44,7 +43,9 @@ TranslateApp::Application.routes.draw do
   match '/show_user_learning_history', to: 'learnings#show_user_learning_history', via: :post
   match '/show_user_words', to: 'learnings#show_user_words', via: [:get, :post]
 
-  
+  # log
+  match '/log', to: 'users#log', via: :post
+
   
   # feedback
   match '/vote', to: 'feedbacks#vote', via: [:get, :post]

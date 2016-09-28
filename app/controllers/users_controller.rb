@@ -170,14 +170,22 @@ class UsersController < ApplicationController
     end
   end
 
+
+
   # TODO think about deprecating this.
   def log
-
-    public_key = params[:user_id]
-    @user = nil
     result = Hash.new
-    result['msg'] = Utilities::Message::MSG_GENERAL_FAILURE
 
+    if !params[:user_id].present? or !params[:time_elapsed].present? or\
+       !params[:activity].present?
+       result['mgs'] = Utilities::Message::MSG_INVALID_PARA
+      return render json: result, status: :bad_request
+    end
+    
+    puts params[:activity]
+    
+    public_key = params[:user_id]
+    
     # Validate userID
     if !UserHandler.validate_public_key( public_key )
       result['msg'] = Utilities::Message::MSG_INVALID_PARA
@@ -191,18 +199,18 @@ class UsersController < ApplicationController
       return render json: result, status: :bad_request
     end
 
-    @time_elapsed = params[:time]
-    @move = params[:move]
-
-    #puts "Log: User " + @user.id.to_s + ":" + @time_elapsed.to_s + ":" + @move.to_s
-    USER_ACTION_LOGGER.info( "Log: User[" + public_key.to_s + "], Elasped_t:" + @time_elapsed.to_s + ", Action:" + @move.to_s )
+    if params[:detail].present?
+      USER_ACTION_LOGGER.info( "Log: User[" + public_key.to_s + "], Elasped_t:" + params[:time_elapsed].to_s + ", Action:" + params[:activity].to_s + ", Detail: " + params[:detail])
+    else
+      USER_ACTION_LOGGER.info( "Log: User[" + public_key.to_s + "], Elasped_t:" + params[:time_elapsed].to_s + ", Action:" + params[:activity].to_s)
+    end
 
     result['msg'] = Utilities::Message::MSG_OK
     return render json: result
   end
+  
 
   def validate_google_id_token
-    
     email = Utilities::UserHandler::email_if_google_id_valid(params[:id_token])
     if email.blank?
       logger.info('No valid identity token present')
