@@ -182,7 +182,7 @@ class UsersController < ApplicationController
       return render json: result, status: :bad_request
     end
     
-    puts params[:activity]
+    puts Utilities::AnnotationUtil.get_pronunciation('中国')
     
     public_key = params[:user_id]
     

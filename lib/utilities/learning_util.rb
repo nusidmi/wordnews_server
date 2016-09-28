@@ -60,7 +60,7 @@ module Utilities::LearningUtil
   def self.get_pronunciation_by_word(word, lang)
     if !word.nil?
       if lang==Utilities::Lang::CODE[:Chinese]
-        return Utilities::ChineseVocabularyHandler.get_pronunciation_by_word( word)
+        return Utilities::ChineseVocabularyHandler.get_pronunciation_by_word(word)
       end
     end
   end

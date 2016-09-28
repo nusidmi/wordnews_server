@@ -25,6 +25,7 @@ class AnnotationsController < ApplicationController
   end
   
   
+  # Return the annotatations done by a given user for a given URL
   def show_by_user_url
     if !params[:user_id].present? or !params[:url_postfix].present? or !params[:lang].present?
       respond_to do |format|
@@ -56,6 +57,7 @@ class AnnotationsController < ApplicationController
   end
   
   
+  # Return the annotations for a given URL
   def show_by_url
     if !params[:url_postfix].present? or !params[:lang].present?
       respond_to do |format|
@@ -75,6 +77,7 @@ class AnnotationsController < ApplicationController
   end
   
   
+  # Return the number of annotations for a given URL
   def show_count_by_url
     if !params[:url_postfix].present? or !params[:lang].present?
       respond_to do |format|
@@ -247,7 +250,7 @@ class AnnotationsController < ApplicationController
     if !Utilities::UserLevel.validate(user.rank, :annotate_news_sites)
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INSUFFICIENT_RANK}, 
-                      status: :bad_request }
+                       status: :bad_request }
       end
       return 
     end
@@ -284,7 +287,11 @@ class AnnotationsController < ApplicationController
     
     success = true
     Annotation.transaction do
-      success &&= @annotation.save
+      if @annotation.new_record?
+        success &&= @annotation.save
+        # store the text and its pronunciation if it is a new word 
+        Utilities::AnnotationUtil.save_pronunciation(@annotation.translation, @annotation.lang)
+      end
       success &&= article.increment!(:annotation_count)
       @annotation_history.annotation_id = @annotation.id
       success &&= @annotation_history.save

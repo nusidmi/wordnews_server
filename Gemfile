@@ -57,6 +57,9 @@ gem 'omniauth-facebook'
 gem "font-awesome-rails"
 gem "koala", "~> 2.2"
 
+gem 'chinese_pinyin'
+
+
 # ruby NLP
 #gem 'birch', :git=>"https://github.com/faustoct/birch.git"
 #gem 'treat'
