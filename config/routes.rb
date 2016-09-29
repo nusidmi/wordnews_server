@@ -4,26 +4,16 @@ TranslateApp::Application.routes.draw do
 
   # TODO: comment these three in production mode
   resources :users
-  resources :dictionaries
+  #resources :dictionaries
   resources :annotations
   resources :articles
 
-  # Old API
-  match '/show_by_dictionary', to: 'translates#replacements_by_dictionary', via: :post
-  match '/show', to: 'translates#replacements_by_bing', via: :post
-  match '/show_multiple', to: 'translates#replacements_multiple_paragraphs_by_bing', via: :post
-  match '/remember', to: 'translates#remember', via: :post
-  match '/getQuiz', to: 'translates#quiz', via: :get
-  match '/getNumber', to: 'translates#calculate', via: :get # replaced by /show_user_learning_history
-  match '/displayHistory', to: 'users#display_history', via: :get # replaced by /show_user_words
+  # Old API, not used
   match '/settings', to: 'users#settings', via: :get
-  match '/getSuggestURL', to: 'users#get_suggest_url', via: :get
-  match '/getExampleSentences', to: 'translates#get_example_sentences', via: :get
   # TODO change this url
   match '/validate_google_id_token', to: 'users#validate_google_id_token', via: [:get, :post]
   
   
-  # TODO: get -> post
   # annotation
   match '/create_annotation', to: 'annotations#create', via: [:get,:post]
   match '/delete_annotation', to: 'annotations#destroy', via: [:get, :post]

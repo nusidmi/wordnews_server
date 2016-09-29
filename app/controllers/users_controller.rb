@@ -25,69 +25,9 @@ class UsersController < ApplicationController
     end
   end
 
-  # What is this for?
-  def get_suggest_url
-    result = Hash.new
 
-    #@result['url'] = "http://zhaoyue.com/cn"   # What is this for?
-    result['url'] = ''
-    result['msg'] = Utilities::Message::MSG_OK
-    return render json: result
-  end
-
-  # TODO: receive language as a parameter
-  # Deprecated: Replaced by the API in learnings_controller.
-  def display_history
-
-    public_key = params[:user_id]
-    @user = nil
-    @msg = Utilities::Message::MSG_GENERAL_FAILURE
-    # Validate userID
-    if !UserHandler.validate_public_key( public_key )
-      @msg = Utilities::Message::MSG_INVALID_PARA
-      return render status: :bad_request
-
-    end
-
-    @user = User.where(:public_key => public_key).first
-    if @user.nil?
-      Rails.logger.warn "display_history: User[" + public_key.to_s + "] not found"
-      @msg = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
-      return render status: :bad_request
-    end
-
-    @msg = Utilities::Message::MSG_OK
-
-    find_to_learn_query = 'user_id = ' + @user.id.to_s + ' and frequency = 0'
-    find_learnt_query = 'user_id = ' + @user.id.to_s + ' and frequency > 0'
-    meaning_to_learn_List = History.all(:select => 'meaning_id', :conditions => [find_to_learn_query])
-    @words_to_learn = []
-    if meaning_to_learn_List.length !=0
-      for meaning in meaning_to_learn_List
-        temp = Meaning.find(meaning.meaning_id)
-        @words_to_learn.push(temp)
-      end
-    end
-
-    meaning_learnt_list = History.all(:select => 'meaning_id', :conditions => [find_learnt_query])
-    @words_learnt = []
-    if meaning_learnt_list.length !=0
-      meaning_learnt_list.each do |meaning|
-        temp = ChineseWords.joins(:english_words)
-                .select('english_meaning, chinese_meaning, meanings.id, english_words_id, chinese_words_id, pronunciation')
-        .where('meanings.id = ?', meaning.meaning_id).first
-        @words_learnt.push(temp)
-      end
-    end
-
-    respond_to do |format|
-      format.html # displayHistory.html.erb
-      #format.json { render json: @words_learnt }
-    end
-  end
-
+  # not implemented yet
   def settings
-
     public_key = params[:user_id]
     @user = nil
     @msg = Utilities::Message::MSG_GENERAL_FAILURE
@@ -105,7 +45,7 @@ class UsersController < ApplicationController
     end
 
     respond_to do |format|
-      format.html #{ render :layout => false }# displayHistory.html.erb
+      format.html #  settings.html.erb
       format.json { render json: @user }
     end
   end
