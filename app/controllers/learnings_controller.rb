@@ -482,6 +482,10 @@ class LearningsController < ApplicationController
         @user.id, params[:lang], QUIZ_COUNT_MAX)
         @mode = 'have learnt'
       end
+      
+      @words.each do |word|
+        word['audio_urls'] = Utilities::LearningUtil.get_audio_urls(word.chinese_pronunciation, 'zh_CN')
+      end
     end
     
     @lang = Utilities::Lang::CODE_TO_LANG[params[:lang].to_sym]
