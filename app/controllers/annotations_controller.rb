@@ -158,9 +158,17 @@ class AnnotationsController < ApplicationController
       
     if params[:lang].present?
       @annotations = Annotation.where('annotations.lang=?', params[:lang]).joins(:annotation_histories).where('user_id=?', @user.id)
+      lang = Utilities::Lang::CODE_TO_LANG[params[:lang].to_sym]
+      @annotations.each do |annotation|
+        annotation.lang = lang
+      end
     else
       @annotations = Annotation.joins(:annotation_histories).where('user_id=?', @user.id)
+      @annotations.each do |annotation|
+        annotation.lang = Utilities::Lang::CODE_TO_LANG[annotation.lang.to_sym]
+      end
     end
+
     respond_to do |format|
       format.html # show_user_annotations.html.erb
       format.json { render json: {msg: Utilities::Message::MSG_OK, annotations: @annotations}, 
@@ -190,12 +198,15 @@ class AnnotationsController < ApplicationController
     end
     
     if params[:lang].present?
-      article_ids = Annotation.joins(:annotation_histories).where('user_id=? and lang=?', @user.id, params[:lang]).pluck(:article_id).uniq
+      article_ids = Annotation.joins(:annotation_histories).where('user_id=? and annotation_histories.lang=?', @user.id, params[:lang]).pluck(:article_id).uniq
     else
       article_ids = Annotation.joins(:annotation_histories).where('user_id=?', @user.id).pluck(:article_id).uniq
     end
     
     @articles = Article.where(id: article_ids)
+    @articles.each do |article|
+      article.lang = Utilities::Lang::CODE_TO_LANG[article.lang.to_sym]
+    end
 
     respond_to do |format|
       format.html # show_user_annotations.html.erb

@@ -42,7 +42,7 @@ class LearningsController < ApplicationController
     
     params[:paragraphs].each do |idx, paragraph|
       if !paragraph[:text].nil? and !paragraph[:text].blank?
-        p = Utilities::Paragraph.new(paragraph[:paragraph_index], paragraph[:text], translator, url)
+        p = Utilities::Paragraph.new(paragraph[:paragraph_index].strip(), paragraph[:text], translator, url)
         #puts p.index.to_s + ' ' + p.text
         s = p.process_text()
         if !s.nil? and s.any?
