@@ -453,7 +453,7 @@ class LearningsController < ApplicationController
   def show_user_words
     if (!params[:user_id].present? or !params[:lang].present? \
         or !UserHandler.validate_public_key(params[:user_id]) \
-        or !params[:is_learning].present?)
+        or !params[:is_learning].present? or (params[:is_learning]!='0' and params[:is_learning]!='1'))
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request }
@@ -475,17 +475,20 @@ class LearningsController < ApplicationController
     if params[:lang]==Utilities::Lang::CODE[:Chinese]
       if params[:is_learning]=='1' # words are learning
         @words = EnglishChineseTranslation.joins(:learning_histories).where('user_id=? AND lang=? AND test_count<?', 
-        @user.id, params[:lang], VIEW_COUNT_MAX)#.pluck_all(:english_text, :chinese_text, :chinese_pronunciation)
+        @user.id, params[:lang], VIEW_COUNT_MAX)
+        @mode = 'are learning'
       elsif params[:is_learning]=='0' # words have learned (passed the max number of quiz)
         @words = EnglishChineseTranslation.joins(:learning_histories).where('user_id=? AND lang=? and test_count=?',  
-        @user.id, params[:lang], QUIZ_COUNT_MAX)#.pluck_all(:english_text, :chinese_text, :chinese_pronunciation)
+        @user.id, params[:lang], QUIZ_COUNT_MAX)
+        @mode = 'have learnt'
       end
     end
     
     @lang = Utilities::Lang::CODE_TO_LANG[params[:lang].to_sym]
     respond_to do |format|
       format.html # index.html.erb
-      format.json { render json: {msg: Utilities::Message::MSG_OK, words: @words, lang: @lang, user_name: @user.user_name}, 
+      format.json { render json: {msg: Utilities::Message::MSG_OK, words: @words, 
+                                  lang: @lang, user_name: @user.user_name, mode: @mode}, 
                           status: :ok }
     end
     
