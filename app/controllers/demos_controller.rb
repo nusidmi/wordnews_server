@@ -2,6 +2,8 @@ class DemosController < ApplicationController
 
   # generate some dummy data to test frontend
   def show_learn_words
+    
+    puts 'demo'
     @words_to_learn = []
     
     # http://www.bbc.com/sport/cricket/36853346
@@ -25,9 +27,9 @@ class DemosController < ApplicationController
     wrap_word(word)
 
     knowledge_level = 2
-    news_category = 'Any'
+    article_category = Utilities::LearningUtil.get_article_category(params[:url])
     word.quiz = Utilities::LearningUtil.generate_quiz_chinese(word.text, word.pos_tag, 
-                                                              knowledge_level, news_category)
+                                                              knowledge_level, article_category)
     @words_to_learn.push(word)
     
     # response

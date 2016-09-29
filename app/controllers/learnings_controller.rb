@@ -8,7 +8,7 @@ class LearningsController < ApplicationController
   def show_learn_words
     if !params[:lang].present? or !params[:translator].present? or 
       !params[:num_of_words].present? or !params[:user_id].present? or
-      !params[:url_postfix].present?
+      !params[:url_postfix].present? or !params[:url].present?
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
                       status: :bad_request }
@@ -55,7 +55,7 @@ class LearningsController < ApplicationController
   
     article = Utilities::ArticleUtil.get_or_create_article(url, url_postfix, lang, website, title, publication_date)
     article_id = article['id']
-    @words_to_learn = select_learn_words(num_of_words, user_id, lang, translator, article_id, quiz_algorithm)
+    @words_to_learn = select_learn_words(num_of_words, user_id, lang, translator, article_id, quiz_algorithm, url)
     
     get_annotations(article_id, lang)
     puts '@words_to_learn size ' + @words_to_learn.size().to_s
@@ -74,7 +74,7 @@ class LearningsController < ApplicationController
   # 3. no duplicate words
   # 4. omit word in phrased annotations (TODO)
   # 5. consider word difficulty level and user's knowledge level (TODO)
-  def select_learn_words(num_of_words, user_id, lang, translator, article_id, quiz_algorithm)
+  def select_learn_words(num_of_words, user_id, lang, translator, article_id, quiz_algorithm, url)
     @sentences.shuffle!
     words_to_learn = []
     word_set = Set.new
@@ -125,7 +125,9 @@ class LearningsController < ApplicationController
               
               if word.learn_type!='skip' and !word.pair_id.nil?
                 if word.learn_type=='test'
-                  word.quiz = generate_quiz(quiz_algorithm, word.text, word.pos_tag, lang, word.test_type)
+                  article_category = Utilities::LearningUtil.get_article_category(url)
+                  puts url + ': ' + article_category
+                  word.quiz = generate_quiz(quiz_algorithm, word.text, word.pos_tag, lang, word.test_type, article_category)
                 end
                 
                 if !word.quiz.nil? or word.learn_type=='view'                 
@@ -194,10 +196,10 @@ class LearningsController < ApplicationController
   
   # TODO: use proper news_category 
   # TODO: continue this
-  def generate_quiz(algorithm, word, word_pos, lang, test_type)
+  def generate_quiz(algorithm, word, word_pos, lang, test_type, article_category)
     if lang==Utilities::Lang::CODE[:Chinese]
       if algorithm=='lin_distance'
-        return Utilities::LearningUtil.generate_quiz_chinese(word, word_pos, test_type, 'Any')
+        return Utilities::LearningUtil.generate_quiz_chinese(word, word_pos, test_type, article_category)
       elsif algorithm=='recent'
         return Utilities::LearningUtil.generate_recent_quiz_chinese(user_id, test_type)
       end
@@ -482,10 +484,11 @@ class LearningsController < ApplicationController
         @user.id, params[:lang], QUIZ_COUNT_MAX)
         @mode = 'have learnt'
       end
-      
-      @words.each do |word|
-        word['audio_urls'] = Utilities::LearningUtil.get_audio_urls(word.chinese_pronunciation, 'zh_CN')
-      end
+    end
+    
+    @words.each do |word|
+      word.audio_urls = Utilities::LearningUtil.get_audio_urls(word.chinese_pronunciation, params[:lang])
+      word.more_url = Utilities::LearningUtil.get_more_url(word.chinese_text, params[:lang])
     end
     
     @lang = Utilities::Lang::CODE_TO_LANG[params[:lang].to_sym]

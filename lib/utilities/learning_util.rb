@@ -195,4 +195,21 @@ module Utilities::LearningUtil
     return false
   end
   
+  # TODO: a better idea?
+  # Use rules to decide the category of news article based on its URL
+  # Such category will be used in quiz generation
+  def self.get_article_category(url)
+    url.downcase!  
+    # news article
+    if url.match('bbc|cnn')
+      return 'technology' if url.match('technology')
+      return 'finance' if url.match('finance|business|economy|money|capital')
+      return 'entertainment' if  url.match('entertainment')
+      return 'world' if url.match('world|politics')
+      return 'sports' if url.match('sport')
+      return 'fashion' if url.match('style')
+      return 'travel' if url.match('travel')
+    end
+    return 'Any'
+  end
 end

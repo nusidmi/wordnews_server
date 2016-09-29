@@ -14,9 +14,18 @@
   <tr>
     <td><%=index+1 %></td>
     <td><%= word.english_text %></td>
-    <td><%= word.chinese_text %></td>
+    <td><a href='<%= word.more_url %>' target='_blank'><%= word.chinese_text %></a></td>
     <td><%= word.chinese_pronunciation %></td>
-    <td><%= word.audio_urls %></td>
+    <td>
+       <button onClick="play(<%= word.id %>)" style="background-color:transparent; border-color:transparent;"> 
+          <%= image_tag('play.png', height:"20", alt:"Play") %>
+        </button>
+        <audio id="<%= word.id %>" )>
+          <% word.audio_urls.each do |url| %>
+            <source src = "<%= url %>"/>
+          <% end %>
+        </audio>
+    </td>
   </tr>
 <% end %>
 </table>

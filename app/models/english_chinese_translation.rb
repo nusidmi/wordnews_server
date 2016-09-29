@@ -1,6 +1,7 @@
 class EnglishChineseTranslation < ActiveRecord::Base
   attr_accessible :chinese_vocabulary_id, :chinese_vocabulary_id, :pos_tag, 
                   :chinese_text, :english_text, :chinese_pronunciation
+  attr_accessor :audio_urls, :more_url
   
   validates_uniqueness_of :chinese_vocabulary_id, :scope => :chinese_vocabulary_id
   #has_many :meanings_example_sentences, :dependent => :destroy
