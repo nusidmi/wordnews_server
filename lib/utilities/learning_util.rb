@@ -171,9 +171,14 @@ module Utilities::LearningUtil
     return quiz
   end
   
-  # Use the most recent learned three words as the distractors
+  # Randomly select 3 from the most recent 10 learned words (view/quiz) as the distractors
+  # If the current user has not learned at least 3 words, we leverage on the learning history of other users.
   def self.generate_recent_quiz_chinese(user_id, test_type)
-    pair_ids = LearningHistory.where(user_id: user_id).order('updated_at desc').limit(3).pluck(:translation_pair_id)
+    pair_ids = LearningHistory.where(user_id: user_id).order('updated_at desc').limit(10).pluck(:translation_pair_id)
+    if pair_ids.size<3
+      pair_ids += LearningHistory.order('updated_at desc').limit(10).pluck(:translation_pair_id)
+    end
+    pair_ids = pair_ids.shuffle[0..2]
     if test_type==2
       distractors = EnglishChineseTranslation.where(id: pair_ids).pluck(:chinese_text)
     else
@@ -202,13 +207,13 @@ module Utilities::LearningUtil
     url.downcase!  
     # news article
     if url.match('bbc|cnn')
-      return 'technology' if url.match('technology')
-      return 'finance' if url.match('finance|business|economy|money|capital')
-      return 'entertainment' if  url.match('entertainment')
-      return 'world' if url.match('world|politics')
-      return 'sports' if url.match('sport')
-      return 'fashion' if url.match('style')
-      return 'travel' if url.match('travel')
+      return 'Technology' if url.match('technology')
+      return 'Finance' if url.match('finance|business|economy|money|capital')
+      return 'Entertainment' if  url.match('entertainment')
+      return 'World' if url.match('world|politics')
+      return 'Sports' if url.match('sport')
+      return 'Fashion' if url.match('style')
+      return 'Travel' if url.match('travel')
     end
     return 'Any'
   end
