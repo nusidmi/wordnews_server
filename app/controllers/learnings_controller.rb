@@ -25,7 +25,7 @@ class LearningsController < ApplicationController
     website = params[:website]
     title = params[:title]
     publication_date = params[:publication_date]
-    quiz_algorithm = params[:quiz_algorithm]? params[:quiz_algorithm].present? : 'lin_distance'
+    quiz_generator = params[:quiz_generator]? params[:quiz_generator].present? : 'lin_distance'
     
     user_id = User.where(:public_key => public_key).pluck(:id).first
     if user_id.nil?
@@ -55,7 +55,7 @@ class LearningsController < ApplicationController
   
     article = Utilities::ArticleUtil.get_or_create_article(url, url_postfix, lang, website, title, publication_date)
     article_id = article['id']
-    @words_to_learn = select_learn_words(num_of_words, user_id, lang, translator, article_id, quiz_algorithm, url)
+    @words_to_learn = select_learn_words(num_of_words, user_id, lang, translator, article_id, quiz_generator, url)
     
     get_annotations(article_id, lang)
     puts '@words_to_learn size ' + @words_to_learn.size().to_s
@@ -74,7 +74,7 @@ class LearningsController < ApplicationController
   # 3. no duplicate words
   # 4. omit word in phrased annotations (TODO)
   # 5. consider word difficulty level and user's knowledge level (TODO)
-  def select_learn_words(num_of_words, user_id, lang, translator, article_id, quiz_algorithm, url)
+  def select_learn_words(num_of_words, user_id, lang, translator, article_id, quiz_generator, url)
     @sentences.shuffle!
     words_to_learn = []
     word_set = Set.new
@@ -126,8 +126,7 @@ class LearningsController < ApplicationController
               if word.learn_type!='skip' and !word.pair_id.nil?
                 if word.learn_type=='test'
                   article_category = Utilities::LearningUtil.get_article_category(url)
-                  puts url + ': ' + article_category
-                  word.quiz = generate_quiz(quiz_algorithm, word.text, word.pos_tag, lang, word.test_type, article_category)
+                  word.quiz = generate_quiz(quiz_generator, word.text, word.pos_tag, lang, word.test_type, article_category)
                 end
                 
                 if !word.quiz.nil? or word.learn_type=='view'                 
@@ -491,11 +490,11 @@ class LearningsController < ApplicationController
       word.more_url = Utilities::LearningUtil.get_more_url(word.chinese_text, params[:lang])
     end
     
-    @lang = Utilities::Lang::CODE_TO_LANG[params[:lang].to_sym]
+    @target_lang = Utilities::Lang::CODE_TO_LANG[params[:lang].to_sym]
     respond_to do |format|
       format.html # index.html.erb
       format.json { render json: {msg: Utilities::Message::MSG_OK, words: @words, 
-                                  lang: @lang, user_name: @user.user_name, mode: @mode}, 
+                                  lang: @target_lang, user_name: @user.user_name, mode: @mode}, 
                           status: :ok }
     end
     

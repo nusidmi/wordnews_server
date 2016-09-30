@@ -10,6 +10,16 @@ class DemosController < ApplicationController
     article_id = 3
     
     
+    user_id = User.where(:public_key => params[:user_id]).pluck(:id).first
+    if user_id.nil?
+      respond_to do |format|
+        format.json { render json: { msg: Utilities::Message::MSG_INVALID_PARA}, 
+                      status: :bad_request }
+      end
+      return 
+    end
+    
+    
     # a word to view translation
     # word_text, paragraph_idx, sentence_idx, word_idx, word_id, word_pos
     word = Utilities::Word.new('appear', 4, -1, 0, 152, 'VB', [-1,-1])
@@ -26,10 +36,14 @@ class DemosController < ApplicationController
     word.learn_type = 'test'
     wrap_word(word)
 
-    knowledge_level = 2
+    test_type = 2
     article_category = Utilities::LearningUtil.get_article_category(params[:url])
-    word.quiz = Utilities::LearningUtil.generate_quiz_chinese(word.text, word.pos_tag, 
-                                                              knowledge_level, article_category)
+    if params[:quiz_generator].present? and params[:quiz_generator]=='semantic'
+      word.quiz = Utilities::LearningUtil.generate_quiz_chinese(word.text, word.pos_tag, 
+                                                                test_type, article_category)
+    else
+      word.quiz = Utilities::LearningUtil.generate_recent_quiz_chinese(user_id, test_type)
+    end
     @words_to_learn.push(word)
     
     # response

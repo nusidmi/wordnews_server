@@ -173,7 +173,7 @@ module Utilities::LearningUtil
   
   # Use the most recent learned three words as the distractors
   def self.generate_recent_quiz_chinese(user_id, test_type)
-    pair_ids = LearningHistory.where(user_id: user_id).order('updated_at desc').limit(3)
+    pair_ids = LearningHistory.where(user_id: user_id).order('updated_at desc').limit(3).pluck(:translation_pair_id)
     if test_type==2
       distractors = EnglishChineseTranslation.where(id: pair_ids).pluck(:chinese_text)
     else

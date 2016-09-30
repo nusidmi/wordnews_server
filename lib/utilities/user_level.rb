@@ -69,10 +69,11 @@ module Utilities::UserLevel
       initialize_rules()
     end
     
-    if user.rank<@@rules.size and user.score>=@@rules[user.rank+1].score and\
-      user.view_count>=@@rules[user.rank+1].view_count and\
-      user.quiz_count>=@@rules[user.rank+1].quiz_count and\
-      user.vote_count>=@@rules[user.rank+1].vote_count
+    if user.rank<@@rules.size and user.score>=@@rules[user.rank].score and\
+      user.view_count>=@@rules[user.rank].view_count and\
+      user.quiz_count>=@@rules[user.rank].quiz_count and\
+      user.vote_count>=@@rules[user.rank].vote_count
+      puts 'upgrade'
       return 1
     else
       return 0
