@@ -36,14 +36,16 @@ class LearningsController < ApplicationController
       return 
     end
 
+    article = Utilities::ArticleUtil.get_or_create_article(url, url_postfix, lang, website, title, publication_date)
+    article_id = article['id']
+    
     # pre-process text
     @sentences = []
     @paragraphs = {} # idx: Paragraph
     
     params[:paragraphs].each do |idx, paragraph|
       if !paragraph[:text].nil? and !paragraph[:text].blank?
-        p = Utilities::Paragraph.new(paragraph[:paragraph_index].strip(), paragraph[:text], translator, url)
-        #puts p.index.to_s + ' ' + p.text
+        p = Utilities::Paragraph.new(paragraph[:paragraph_index].strip(), paragraph[:text], article_id)
         s = p.process_text()
         if !s.nil? and s.any?
           @sentences += s
@@ -53,8 +55,7 @@ class LearningsController < ApplicationController
     end
 
   
-    article = Utilities::ArticleUtil.get_or_create_article(url, url_postfix, lang, website, title, publication_date)
-    article_id = article['id']
+   
     @words_to_learn = select_learn_words(num_of_words, user_id, lang, translator, article_id, quiz_generator, url)
     
     get_annotations(article_id, lang)
@@ -147,7 +148,6 @@ class LearningsController < ApplicationController
   end
   
   # Return at most ANNOTATION_COUNT_MAX top voted annotations
-  # TODO: pronunciation provided by user?
   # TODO: change the order when vote weight rule changes
   def get_annotations(article_id, lang)
     @words_to_learn.each do |word|
@@ -169,10 +169,13 @@ class LearningsController < ApplicationController
   
   # First retrieve the translation from database. If not exits, request translator and save
   def translate(word, sentence, lang, translator, article_id)
-    result = MachineTranslation.fetch_id_transl_votes_by_params1( article_id, word.paragraph_index, word.word_index, translator, lang, word.text)
+    result = MachineTranslation.fetch_id_transl_votes_by_params1(article_id, 
+      word.paragraph_index, word.word_index, translator, lang, word.text)
 
     if !result.nil?
-      return [result['id'], result['translation'], Utilities::LearningUtil.get_weighted_vote(result['vote'], result['implicit_vote'], 'machine')]
+      return [result['id'], result['translation'], 
+              Utilities::LearningUtil.get_weighted_vote(result['vote'], result['implicit_vote'], 
+              'machine')]
     end
       
     if translator == 'dict'
@@ -193,8 +196,6 @@ class LearningsController < ApplicationController
     end
   end
   
-  # TODO: use proper news_category 
-  # TODO: continue this
   def generate_quiz(algorithm, word, word_pos, lang, test_type, article_category)
     if lang==Utilities::Lang::CODE[:Chinese]
       if algorithm=='lin_distance'
@@ -437,9 +438,6 @@ class LearningsController < ApplicationController
       end
       return 
     end
-    
-    #learning_count = LearningHistory.where('user_id=? AND lang=? AND test_count<?', user.id, params[:lang], VIEW_COUNT_MAX).count
-    #learnt_count = LearningHistory.where('user_id=? AND lang=? and test_count=?',  user.id, params[:lang], QUIZ_COUNT_MAX).count
     
     respond_to do |format|
       format.json { render json: { msg: Utilities::Message::MSG_OK, 

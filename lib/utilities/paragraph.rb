@@ -6,17 +6,15 @@ require 'json'
 class Utilities::Paragraph
 #class Paragraph
 
-  def initialize (paragraph_index, text, translator, url)
+  def initialize (paragraph_index, text, article_id)
     @index = paragraph_index
     @text = text
-    @translator = translator
-    @url = url
+    @article_id = article_id
     @sentences = []
   end
   
     
   def process_text_script()
-
     sentences_str = `python "./public/text_processing.py" sentence_segmenter "#{@text}"`
     if sentences_str=='ERROR'
       return []     
@@ -37,9 +35,8 @@ class Utilities::Paragraph
   end
   
   
-  # TODO: get the url of nlp host from a job scheduler
   def process_text()
-    hash_key = "paragraph_nlp_reply_url_" + @url.to_s + "_trans_" + @translator.to_s + "_idx_" + @index.to_s
+    hash_key = "paragraph_nlp_reply_article_" + @article_id.to_s + "_idx_" + @index.to_s
 
     nlp_reply =  Rails.cache.read(hash_key)
     if nlp_reply.nil?
