@@ -224,7 +224,7 @@ class LearningsController < ApplicationController
       return 
     end
     
-    if !Utilities::UserLevel.validate(user.rank, :view)
+    if !Utilities::UserLevel.validate(user.rank, user.registered_at, :view)
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INSUFFICIENT_RANK}, 
                       status: :bad_request }
@@ -295,7 +295,7 @@ class LearningsController < ApplicationController
       return 
     end
     
-    if !Utilities::UserLevel.validate(user.rank, :take_quiz)
+    if !Utilities::UserLevel.validate(user.rank, user.registered_at, :take_quiz)
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INSUFFICIENT_RANK}, 
                       status: :bad_request }
@@ -365,7 +365,7 @@ class LearningsController < ApplicationController
       return 
     end
     
-    if !Utilities::UserLevel.validate(user.rank, :view)
+    if !Utilities::UserLevel.validate(user.rank, user.registered_at, :view)
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INSUFFICIENT_RANK}, 
                       status: :bad_request }

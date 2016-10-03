@@ -122,8 +122,6 @@ class UsersController < ApplicationController
       return render json: result, status: :bad_request
     end
     
-    puts Utilities::AnnotationUtil.get_pronunciation('中国')
-    
     public_key = params[:user_id]
     
     # Validate userID
@@ -140,7 +138,7 @@ class UsersController < ApplicationController
     end
 
     if params[:detail].present?
-      USER_ACTION_LOGGER.info( "Log: User[" + public_key.to_s + "], Elasped_t:" + params[:time_elapsed].to_s + ", Action:" + params[:activity].to_s + ", Detail: " + params[:detail])
+      USER_ACTION_LOGGER.info( "Log: User[" + public_key.to_s + "], Elasped_t:" + params[:time_elapsed].to_s + ", Action:" + params[:activity].to_s + ", Detail: " + params[:detail].to_s)
     else
       USER_ACTION_LOGGER.info( "Log: User[" + public_key.to_s + "], Elasped_t:" + params[:time_elapsed].to_s + ", Action:" + params[:activity].to_s)
     end

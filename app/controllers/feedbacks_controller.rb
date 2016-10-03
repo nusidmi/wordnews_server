@@ -36,7 +36,7 @@ class FeedbacksController < ApplicationController
     end
     
     
-    if !Utilities::UserLevel.validate(user.rank, :vote_translation)
+    if !Utilities::UserLevel.validate(user.rank, user.registered_at, :vote_translation)
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INSUFFICIENT_RANK}, 
                       status: :bad_request }

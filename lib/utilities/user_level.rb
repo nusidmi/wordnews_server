@@ -16,13 +16,16 @@ module Utilities::UserLevel
   PRIVILEGE_MIN_RANK = {view: 1, take_quiz: 2, view_human_annotation: 3,
                         vote_translation: 4, input_translation: 5, 
                         annotate_news_sites: 6, annotate_any_sites: 7}
+  PRIVILEGE_REGISTER_REQUIRED = {view: false, take_quiz:false, view_human_annotation: false,
+                                vote_translation: true, input_translation: true,
+                                annotate_news_sites: true, annotate_any_sites: true}
   
   
   
   @@rules = []
 
 
-  # TODO: refine rules  
+  # TODO: refine rules and load from a file
   def self.initialize_rules()
     
     # rank 1 (the default one): view translation
@@ -82,14 +85,15 @@ module Utilities::UserLevel
   
   # Verify whether the user has enough rank to access certain functions
   # TODO: modify this when rule changes
-  def self.validate(rank, privillege_sym)
+  # TODO: fix BUG!
+  def self.validate(rank, registered_at, privillege_sym)
     if PRIVILEGE_MIN_RANK.key?(privillege_sym)
-      return rank>=PRIVILEGE_MIN_RANK[privillege_sym]
+      is_registered = false ? registered_at.nil?: true
+      return (rank>=PRIVILEGE_MIN_RANK[privillege_sym] and (!PRIVILEGE_REGISTER_REQUIRED[privillege_sym] or is_registered))
     else
       return false
     end
   end
-  
   
   
   class Rule

@@ -123,6 +123,10 @@ class ArticlesController < ApplicationController
       @time_msg = 'all the time'
     end
     
+    @articles.each do |article|
+      article.lang = Utilities::Lang::CODE_TO_LANG[article.lang.to_sym]
+    end
+    
     respond_to do |format|
       format.html # show_most_annotated_urls.html.erb
       format.json { render json: {msg: Utilities::Message::MSG_OK, urls: @articles}, 

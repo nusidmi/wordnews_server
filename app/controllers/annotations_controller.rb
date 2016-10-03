@@ -258,7 +258,7 @@ class AnnotationsController < ApplicationController
 
     user = User.where(:public_key => params[:annotation][:user_id]).first
     
-    if !Utilities::UserLevel.validate(user.rank, :annotate_news_sites)
+    if !Utilities::UserLevel.validate(user.rank, user.registered_at, :annotate_news_sites)
       respond_to do |format|
         format.json { render json: { msg: Utilities::Message::MSG_INSUFFICIENT_RANK}, 
                        status: :bad_request }
