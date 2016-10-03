@@ -41,9 +41,17 @@ class Utilities::Paragraph
     nlp_reply =  Rails.cache.read(hash_key)
     if nlp_reply.nil?
       params = {"text": @text}
-      response = HTTParty.post(NLP_HOST+'/text_process',
-                               :body=>params.to_json,
-                               :headers => {'Content-Type' => 'application/json'})
+      begin 
+        response = HTTParty.post(NLP_HOST+'/text_process',
+                                 :body=>params.to_json,
+                                 :headers => {'Content-Type' => 'application/json'})
+      rescue Rack::Timeout::RequestTimeoutException
+        # The Heroku server may be waken up due to the first call.Such re-restart takes some time which causes the timeout error.
+        # Therefore, we will re-send the request.
+        response = HTTParty.post(NLP_HOST+'/text_process',
+                                 :body=>params.to_json,
+                                 :headers => {'Content-Type' => 'application/json'})
+      end
 
       if response.code!=200 or response.body==''
         puts 'Error in processing ' + @text
