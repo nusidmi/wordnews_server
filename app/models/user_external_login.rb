@@ -17,4 +17,8 @@ class UserExternalLogin < ActiveRecord::Base
     where(ext_user_id: auth.uid, ext_auth_provider: auth.provider ).first
   end
 
+  def self.find_with_user_id_and_provider(user_id, provider)
+    where(user_id: user_id, ext_auth_provider: provider ).first
+  end
+
 end
