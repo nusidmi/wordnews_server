@@ -32,7 +32,7 @@ function play(id) {
             index += 1;
             // use timeout to prevent The play() request was interrupted by a call to pause() error
             setTimeout(function() {
-                audioElem.play()
+                audioElem.play();
             }, 10);
         } else {
             //Reset back to first audio source
@@ -45,6 +45,6 @@ function play(id) {
     audioElem.addEventListener('ended', playNext);
     audioElem.src = audioSources[0].src;
     setTimeout(function() {
-        audioElem.play()
+        audioElem.play();
     }, 10);
 }

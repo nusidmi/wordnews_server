@@ -15,7 +15,7 @@
     <td><a href='<%= word.more_url %>' target='_blank'><%= word.chinese_text %></a></td>
     <td>
        <button onClick="play(<%= word.id %>)" style="background-color:transparent; border-color:transparent;"> 
-          <%= image_tag('play.png', height:"18", alt:"Listen") %>
+          <%= image_tag('audio.png', height:"18", alt:"Listen") %>
         </button>
         <audio id="<%= word.id %>" )>
           <% word.audio_urls.each do |url| %>

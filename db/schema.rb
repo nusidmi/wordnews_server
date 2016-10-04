@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160928084936) do
+ActiveRecord::Schema.define(:version => 20161004090440) do
 
   create_table "annotation_histories", :force => true do |t|
     t.integer  "user_id"
@@ -178,6 +178,7 @@ ActiveRecord::Schema.define(:version => 20160928084936) do
     t.integer  "quiz_count",       :default => 0, :null => false
     t.integer  "learnt_count",     :default => 0, :null => false
     t.integer  "vote_count",       :default => 0, :null => false
+    t.integer  "facebook_share",   :default => 0
   end
 
   add_index "users", ["email"], :name => "index_users_on_email"
