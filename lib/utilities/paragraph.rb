@@ -13,7 +13,7 @@ class Utilities::Paragraph
     @sentences = []
   end
   
-    
+  # Replaced by process_text
   def process_text_script()
     sentences_str = `python "./public/text_processing.py" sentence_segmenter "#{@text}"`
     if sentences_str=='ERROR'
@@ -48,6 +48,7 @@ class Utilities::Paragraph
       rescue Rack::Timeout::RequestTimeoutException
         # The Heroku server may be waken up due to the first call.Such re-restart takes some time which causes the timeout error.
         # Therefore, we will re-send the request.
+        puts 'NLP timeout'
         response = HTTParty.post(NLP_HOST+'/text_process',
                                  :body=>params.to_json,
                                  :headers => {'Content-Type' => 'application/json'})
@@ -57,26 +58,18 @@ class Utilities::Paragraph
         puts 'Error in processing ' + @text
         return []
       end
+      
       Rails.cache.write(hash_key, response.body)
-      results = JSON.parse(response.body)
-
-      results.each_with_index do |result, result_index|
-        s = Utilities::Sentence.new(result["sent"], result["words"], result["tags"], @index, result_index)
-        @sentences.push(s)
-      end
-
-      return @sentences
-    else
-      results = JSON.parse(nlp_reply)
-
-      results.each_with_index do |result, result_index|
-        s = Utilities::Sentence.new(result["sent"], result["words"], result["tags"], @index, result_index)
-        @sentences.push(s)
-      end
-
-      return @sentences
+      nlp_reply = response.body
     end
     
+    results = JSON.parse(nlp_reply)
+    results.each_with_index do |result, result_index|
+      s = Utilities::Sentence.new(result["sent"], result["words"], result["tags"], @index, result_index)
+      @sentences.push(s)
+    end
+
+    return @sentences
   end
   
   
