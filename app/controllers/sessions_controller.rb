@@ -96,7 +96,7 @@ class SessionsController < ApplicationController
 
       if !@user_ext_login.nil?
         Rails.logger.debug "authenticate_social: [SIGNUP] User[" + public_key.to_s + "]. This social account has already registered!"
-        flash[:info] = Utilities::Message::MSG_ACCOUNT_ALREADY_REGISTERED
+        flash[:info] = Utilities::Message::MSG_SOCIAL_SIGNUP_ACCOUNT_ALREADY_REGISTERED
         redirect_to :action => "sign_up_new_user", :user_id => public_key, :controller => "users"
         return
       end
