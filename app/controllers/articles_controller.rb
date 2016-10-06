@@ -120,11 +120,12 @@ class ArticlesController < ApplicationController
         return
       end
       
-      @articles = Article.where(lang: @lang, publication_date: 
-                                @from_date..@to_date).order('annotation_count desc').limit(@num)
+      @articles = Article.where("lang=? and publication_date>=? and publication_date<=? and annotation_count>1", 
+      @lang, @from_date, @to_date).order('annotation_count desc').limit(@num)
+        
       @time_msg = 'from ' + @from_date + ' to ' + @to_date
     else
-      @articles = Article.where(lang: @lang).order('annotation_count desc').limit(@num)
+      @articles = Article.where('lang=? and  annotation_count>1 ', @lang).order('annotation_count desc').limit(@num)
       @time_msg = 'all the time'
     end
     

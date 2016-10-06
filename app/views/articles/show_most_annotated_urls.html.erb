@@ -1,6 +1,5 @@
 <h1>Most annotated articles <%= @time_msg %> </h1>
 
-
 <div class="text-center" style="min-height: 40px">
   <% if @user_id %>
       <a href="<%= facebook_most_annotated_share_path(@lang, @num, @from_date, @to_date, @user_id) %>" 
