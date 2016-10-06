@@ -84,7 +84,7 @@ class FacebookController < ApplicationController
     end
 
     @caption = "Using WordNews, I have learnt " + params[:num].to_s + " " + Utilities::Lang::CODE_TO_LANG[params[:lang].to_sym].downcase + " " + "word".pluralize(params[:num].to_i)
-    @caption += " from this article " + params[:url].to_s
+    @caption += " from this article." + params[:url].to_s
 
     @graph = Koala::Facebook::API.new(@user_ext_login.oauth_token)
     @graph.put_wall_post(@caption, {:link => ENV['HOST_ADDRESS'].to_s} )
