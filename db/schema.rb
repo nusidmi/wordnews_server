@@ -158,27 +158,27 @@ ActiveRecord::Schema.define(:version => 20161004090440) do
 
   create_table "users", :force => true do |t|
     t.string   "user_name"
-    t.datetime "created_at",                      :null => false
-    t.datetime "updated_at",                      :null => false
+    t.datetime "created_at",                          :null => false
+    t.datetime "updated_at",                          :null => false
     t.string   "email"
     t.string   "password_digest"
-    t.integer  "public_key",                      :null => false
-    t.integer  "score",            :default => 0, :null => false
+    t.integer  "public_key",                          :null => false
+    t.integer  "score",                :default => 0, :null => false
     t.text     "avatar"
-    t.integer  "role",             :default => 2, :null => false
-    t.integer  "rank",             :default => 1, :null => false
-    t.integer  "status",           :default => 1, :null => false
-    t.integer  "learning_count",   :default => 0, :null => false
-    t.integer  "annotation_count", :default => 0, :null => false
+    t.integer  "role",                 :default => 2, :null => false
+    t.integer  "rank",                 :default => 1, :null => false
+    t.integer  "status",               :default => 1, :null => false
+    t.integer  "learning_count",       :default => 0, :null => false
+    t.integer  "annotation_count",     :default => 0, :null => false
     t.datetime "registered_at"
     t.string   "remember_digest"
     t.string   "reset_digest"
     t.datetime "reset_sent_at"
-    t.integer  "view_count",       :default => 0, :null => false
-    t.integer  "quiz_count",       :default => 0, :null => false
-    t.integer  "learnt_count",     :default => 0, :null => false
-    t.integer  "vote_count",       :default => 0, :null => false
-    t.integer  "facebook_share",   :default => 0
+    t.integer  "view_count",           :default => 0, :null => false
+    t.integer  "quiz_count",           :default => 0, :null => false
+    t.integer  "learnt_count",         :default => 0, :null => false
+    t.integer  "vote_count",           :default => 0, :null => false
+    t.integer  "facebook_share_count", :default => 0
   end
 
   add_index "users", ["email"], :name => "index_users_on_email"

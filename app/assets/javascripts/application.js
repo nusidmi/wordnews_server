@@ -49,13 +49,14 @@ function play(id) {
     }, 10);
 }
 
+
 $(document).ready(function(){
     $("#fb-anno-share").on("click",function(e) {
-        lang = this.getAttribute("data-lang");
-        num = this.getAttribute("data-num");
-        from_date = this.getAttribute("data-from-date");
-        to_date = this.getAttribute("data-to-date");
-        user_id = this.getAttribute("data-user-id");
+        var lang = this.getAttribute("data-lang");
+        var num = this.getAttribute("data-num");
+        var from_date = this.getAttribute("data-from-date");
+        var to_date = this.getAttribute("data-to-date");
+        var user_id = this.getAttribute("data-user-id");
         e.preventDefault(); // cancel the link itself
 
         $.ajax({
@@ -73,7 +74,7 @@ $(document).ready(function(){
                 user_id: user_id
             },
             success : function(result) { // get successful and result returned by server
-                // console.log("success");
+                console.log("click share button");
                 //If there is more than one annotation in the link, display the counter
             },
             error : function(result) {

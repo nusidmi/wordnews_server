@@ -1,24 +1,50 @@
 module Utilities::UserLevel
-  ACTION = {view: 'view a translation', 
-            pass_quiz: 'pass a quiz', 
-            explict_vote: 'vote a translation', 
-            implicit_vote: 'view additioanl translation',
-            create_annotation: 'create an annotation',
-            update_annotation: 'update an annotation',
-            delete_annotation: 'delete an annotation'}
+  ACTION = {
+    view: 'view a translation', 
+    pass_quiz: 'pass a quiz', 
+    explict_vote: 'vote a translation', 
+    implicit_vote: 'view additioanl translation',
+    create_annotation: 'create an annotation',
+    update_annotation: 'update an annotation',
+    delete_annotation: 'delete an annotation'
+  }
             
   
   # TODO: decrease score when delete annotation?
-  SCORE = {view: 5, pass_quiz: 10, explict_vote: 5, implicit_vote: 2, 
-           create_annotation: 10, update_annotation: 0, delete_annotation: 0}
+  SCORE = {
+    view:              5, 
+    pass_quiz:         10, 
+    explict_vote:      5, 
+    implicit_vote:     2, 
+    create_annotation: 10, 
+    update_annotation: 0, 
+    delete_annotation: 0,
+    sns_share:         5
+  }
            
   
-  PRIVILEGE_MIN_RANK = {view: 1, take_quiz: 2, view_human_annotation: 3,
-                        vote_translation: 4, input_translation: 5, 
-                        annotate_news_sites: 6, annotate_any_sites: 7}
-  PRIVILEGE_REGISTER_REQUIRED = {view: false, take_quiz:false, view_human_annotation: false,
-                                vote_translation: true, input_translation: true,
-                                annotate_news_sites: true, annotate_any_sites: true}
+  PRIVILEGE_MIN_RANK = {
+    view:                  1, 
+    take_quiz:             2, 
+    view_human_annotation: 3,
+    vote_translation:      4, 
+    input_translation:     5, 
+    annotate_news_sites:   6, 
+    annotate_any_sites:    7,
+    sns_share:             1
+  }
+  
+  
+  PRIVILEGE_REGISTER_REQUIRED = {
+    view:                   false, 
+    take_quiz:              false, 
+    view_human_annotation:  false,
+    vote_translation:       true, 
+    input_translation:      true,
+    annotate_news_sites:    true, 
+    annotate_any_sites:     true,
+    sns_share:              false
+  }
   
   
   

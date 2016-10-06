@@ -19,7 +19,8 @@ class FacebookController < ApplicationController
       return render json: result, status: :bad_request
     end
 
-    id = User.where(:public_key => public_key).pluck(:id).first
+    user = User.where(:public_key => public_key).first
+    id = user.id
     if id.nil?
       Rails.logger.warn "share_most_annotated: User[" + public_key.to_s + "] not found"
       result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
@@ -40,12 +41,22 @@ class FacebookController < ApplicationController
     query_str += params[:from_date].present? ? ("&from_date=" + params[:from_date].to_s) : ""
     query_str += params[:to_date].present? ? ("&to_date=" + params[:to_date].to_s) : ""
 
-    @link = ENV['HOST_ADDRESS'] + "/show_most_annotated_urls?" + query_str
+    @link = request.protocol + request.host_with_port + "/show_most_annotated_urls?" + query_str
 
     @graph = Koala::Facebook::API.new(@user_ext_login.oauth_token)
     @graph.put_wall_post("Go checkout annotated these articles!", {:name => "Most annotated articles", :link => @link })
 
 
+    # give credit to user's score
+    if user.facebook_share_count<MAX_FB_SHARE_WITH_CREDITS
+      user.score += Utilities::UserLevel.get_score(:sns_share)
+      user.rank += Utilities::UserLevel.upgrade_rank(user)
+      user.update_attributes(facebook_share_count: user.facebook_share_count+1, 
+                             score: user.score, rank: user.rank)
+    else
+      user.update_attributes(facebook_share_count: user.facebook_share_count+1)
+    end
+    
     result['msg'] = Utilities::Message::MSG_OK
     return render json: result
 

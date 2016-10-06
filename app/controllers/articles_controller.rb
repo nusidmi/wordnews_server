@@ -99,7 +99,12 @@ class ArticlesController < ApplicationController
       end
     return
     end
+    @lang = params[:lang]
+    @num = params[:num]
     
+    if params[:user_id].present?
+      @user_id = params[:user_id]
+    end
     
     if params[:from_date].present? and params[:to_date].present? 
       @from_date = params[:from_date]
@@ -115,11 +120,11 @@ class ArticlesController < ApplicationController
         return
       end
       
-      @articles = Article.where(lang: params[:lang], publication_date: 
-                                @from_date..@to_date).order('annotation_count desc').limit(params[:num])
+      @articles = Article.where(lang: @lang, publication_date: 
+                                @from_date..@to_date).order('annotation_count desc').limit(@num)
       @time_msg = 'from ' + @from_date + ' to ' + @to_date
     else
-      @articles = Article.where(lang: params[:lang]).order('annotation_count desc').limit(params[:num])
+      @articles = Article.where(lang: @lang).order('annotation_count desc').limit(@num)
       @time_msg = 'all the time'
     end
     
