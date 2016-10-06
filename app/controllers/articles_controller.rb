@@ -131,7 +131,11 @@ class ArticlesController < ApplicationController
     @articles.each do |article|
       article.lang = Utilities::Lang::CODE_TO_LANG[article.lang.to_sym]
     end
-    
+
+    if params[:user_id].present?
+      @user_id = params[:user_id]
+    end
+
     respond_to do |format|
       format.html # show_most_annotated_urls.html.erb
       format.json { render json: {msg: Utilities::Message::MSG_OK, urls: @articles}, 
