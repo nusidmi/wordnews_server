@@ -62,8 +62,7 @@ TranslateApp::Application.routes.draw do
   match '/auth/failure', to: 'sessions#authenticate_social_failure', via: [:get, :post]
 
   match '/auth/facebook/most_annotate_share', to: 'facebook#share_most_annotated', via: :post
-  
-
+  match '/auth/facebook/post_recommend', to: 'facebook#post_recommend', via: :post
 
   # The priority is based upon order of creation:
   # first created -> highest priority.
