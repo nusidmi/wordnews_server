@@ -99,8 +99,10 @@ class ArticlesController < ApplicationController
       end
     return
     end
-    
-    
+
+    @from_date = nil
+    @to_date = nil
+    @user_id = nil
     if params[:from_date].present? and params[:to_date].present? 
       @from_date = params[:from_date]
       @to_date = params[:to_date]
@@ -126,7 +128,11 @@ class ArticlesController < ApplicationController
     @articles.each do |article|
       article.lang = Utilities::Lang::CODE_TO_LANG[article.lang.to_sym]
     end
-    
+
+    if params[:user_id].present?
+      @user_id = params[:user_id]
+    end
+
     respond_to do |format|
       format.html # show_most_annotated_urls.html.erb
       format.json { render json: {msg: Utilities::Message::MSG_OK, urls: @articles}, 

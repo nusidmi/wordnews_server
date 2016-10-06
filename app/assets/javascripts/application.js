@@ -74,10 +74,10 @@ $(document).ready(function(){
             },
             success : function(result) { // get successful and result returned by server
                 // console.log("success");
-                //If there is more than one annotation in the link, display the counter
+                $.notify("Share successful", { globalPosition: 'top left', className: 'success'} );
             },
             error : function(result) {
-                console.log( "fb-anno-share error" );
+                $.notify("Share unsuccessful", { globalPosition: 'top left', className: 'error'} );
             }
         });
     });
