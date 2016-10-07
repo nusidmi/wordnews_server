@@ -80,7 +80,8 @@ class FacebookController < ApplicationController
       return render json: result, status: :bad_request
     end
 
-    id = User.where(:public_key => public_key).pluck(:id).first
+    user = User.where(:public_key => public_key).first
+    id = user.id
     if id.nil?
       Rails.logger.warn "share_most_annotated: User[" + public_key.to_s + "] not found"
       result['msg'] = Utilities::Message::MSG_SHOW_USER_NOT_FOUND
@@ -98,10 +99,15 @@ class FacebookController < ApplicationController
     @caption += " from this article." + params[:url].to_s
 
     host = request.protocol + request.host_with_port
-    @graph = Koala::Facebook::API.new(@user_ext_login.oauth_token)
-    @graph.put_wall_post(@caption, {:link => host} )
-    
-    
+    begin
+      @graph = Koala::Facebook::API.new(@user_ext_login.oauth_token)
+      @graph.put_wall_post(@caption, {:link => host} )
+    rescue Exception => e
+      Rails.logger.warn "Koala::Facebook: Error e.msg=>[" + e.message + "]"
+      result['msg'] = "Error posting to Facebook"
+      return render json: result, status: :bad_request
+    end
+
     # give credits to user
     if user.facebook_share_count<MAX_FB_SHARE_WITH_CREDITS
       user.score += Utilities::UserLevel.get_score(:sns_share)
@@ -114,6 +120,7 @@ class FacebookController < ApplicationController
 
 
     result['msg'] = Utilities::Message::MSG_OK
+    result['user'] = Hash.new
     result['user']['score'] = user.score
     result['user']['rank'] = user.rank
     return render json: result, status: :ok
