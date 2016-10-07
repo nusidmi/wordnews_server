@@ -43,9 +43,14 @@ class FacebookController < ApplicationController
 
     @link = request.protocol + request.host_with_port + "/show_most_annotated_urls?" + query_str
 
-    @graph = Koala::Facebook::API.new(@user_ext_login.oauth_token)
-    @graph.put_wall_post("Go checkout annotated these articles!", {:name => "Most annotated articles", :link => @link })
-
+    begin
+      @graph = Koala::Facebook::API.new(@user_ext_login.oauth_token)
+      @graph.put_wall_post("Go checkout annotated these articles!", {:name => "Most annotated articles", :link => @link })
+    rescue Exception => e
+      Rails.logger.warn "Koala::Facebook: Error e.msg=>[" + e.message + "]"
+      result['msg'] = "Error posting to Facebook"
+      return render json: result, status: :bad_request
+    end
 
     # give credits to user
     if user.facebook_share_count<MAX_FB_SHARE_WITH_CREDITS
