@@ -111,7 +111,6 @@ module Utilities::UserLevel
   
   # Verify whether the user has enough rank to access certain functions
   # TODO: modify this when rule changes
-  # TODO: fix BUG!
   def self.validate(rank, registered_at, privillege_sym)
     if PRIVILEGE_MIN_RANK.key?(privillege_sym)
       is_registered = false ? registered_at.nil?: true
