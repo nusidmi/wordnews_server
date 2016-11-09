@@ -1,0 +1,21 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+one:
+  user_id: 1
+  ann_id: 1
+  selected_text: MyString
+  translation: MyString
+  lang: MyString
+  paragraph_idx: 1
+  text_idx: 1
+  url: MyString
+
+two:
+  user_id: 1
+  ann_id: 1
+  selected_text: MyString
+  translation: MyString
+  lang: MyString
+  paragraph_idx: 1
+  text_idx: 1
+  url: MyString

@@ -1,0 +1,37 @@
+<% provide(:title, 'Sign Up') %>
+<h1>Sign up</h1>
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <%= form_for @user, url: "/sign_up", method: :post do |f| %>
+        <% if flash[:error] || flash[:errors] %>
+            <div class="alert alert-danger"><%= flash[:error] || flash[:errors] %></div>
+        <% end %>
+        <% if flash[:info] %>
+            <div class="alert alert-info"><%= flash[:info] || flash[:info] %></div>
+        <% end %>
+        <% flash[:error] = flash[:errors] = flash[:info] = nil %>
+
+        <%= f.hidden_field :public_key %>
+        <%= f.label :user_name, "User Name" %>
+        <%= f.text_field :user_name, class: 'form-control', :required => true%>
+
+        <%= f.label :email, "Email Address" %>
+        <%= f.email_field :email, class: 'form-control', :required => true%>
+
+        <%= f.label :password %>
+        <%= f.password_field :password, class: 'form-control', :required => true%>
+
+        <%= f.label :password_confirmation, "Confirm Password" %>
+        <%= f.password_field :password_confirmation, class: 'form-control', :required => true%>
+
+        <%= f.submit "Sign Up!", class: "btn btn-primary" %>
+    <% end %>
+    <div class="text-center">
+      <p style="text-align: center"> - OR - </p>
+      <a href="<%= social_auth_path(:facebook, "signup", @pub_key) %>" class="btn btn-block btn-social btn-facebook btn-flat"><i class="fa fa-facebook"></i>
+        Sign up with Facebook
+      </a>
+    </div>
+  </div>
+</div>

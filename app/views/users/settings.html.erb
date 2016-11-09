@@ -1,0 +1,12 @@
+<% if @user.nil? %>
+    <ul class="nav">
+      <%= @msg %>
+    </ul>
+<% else %>
+<ul >
+	<li>User Name: <%=  @user.user_name %></li>
+</ul>
+
+
+<% end %>
+

@@ -1,0 +1,22 @@
+
+<h1>All the articles annotated  by <%=  @user.user_name %></h1>
+
+<table class="table table-striped">
+  <tr>
+    <th>No. </th>
+    <th>Article</th>
+    <th>Language</th>
+    <th>Publication Date</th>
+  </tr>
+
+  <% @articles.each_with_index do |article, index| %>
+    <tr>
+      <td><%=index+1 %></td>
+      <td><a href='<%=article.url %>'><%= article.title %></a></td>
+      <td><%= article.lang %></td>
+      <td><%= article.publication_date %></td>
+    </tr>
+  <% end %>
+</table>
+
+<br />

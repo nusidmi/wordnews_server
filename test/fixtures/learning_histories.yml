@@ -1,0 +1,13 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+one:
+  user_id: 1
+  meanings_id: 1
+  view_count: 1
+  test_count: 1
+
+two:
+  user_id: 1
+  meanings_id: 1
+  view_count: 1
+  test_count: 1

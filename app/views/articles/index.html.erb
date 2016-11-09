@@ -1,0 +1,33 @@
+<h1>Listing articles</h1>
+
+<table class="table table-striped">
+  <tr>
+    <th>Website</th>
+    <th>Url</th>
+    <th>Url postfix</th>
+    <th>Annotation count</th>
+    <th>Language</th>
+    <th>Publication Date</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @articles.each do |article| %>
+  <tr>
+    <td><%= article.website %></td>
+    <td><%= article.url %></td>
+    <td><%= article.url_postfix %></td>
+    <td><%= article.annotation_count %></td>
+    <td><%= article.lang %></td>
+    <td><%= article.publication_date %></td>
+    <td><%= link_to 'Show', article %></td>
+    <td><%= link_to 'Edit', edit_article_path(article) %></td>
+    <td><%= link_to 'Destroy', article, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Article', new_article_path %>

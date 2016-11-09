@@ -1,0 +1,30 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Website:</b>
+  <%= @article.website %>
+</p>
+
+<p>
+  <b>Url:</b>
+  <%= @article.url %>
+</p>
+
+<p>
+  <b>Url postfix:</b>
+  <%= @article.url_postfix %>
+</p>
+
+<p>
+  <b>Annotation count:</b>
+  <%= @article.annotation_count %>
+</p>
+
+<p>
+  <b>Language:</b>
+  <%= @article.lang %>
+</p>
+
+
+<%= link_to 'Edit', edit_article_path(@article) %> |
+<%= link_to 'Back', articles_path %>

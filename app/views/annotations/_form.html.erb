@@ -1,0 +1,49 @@
+<%= form_for(@annotation) do |f| %>
+  <% if @annotation.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@annotation.errors.count, "error") %> prohibited this annotation from being saved:</h2>
+
+      <ul>
+      <% @annotation.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :user_id %><br />
+    <%= f.number_field :user_id %>
+  </div>
+  <div class="field">
+    <%= f.label :ann_id %><br />
+    <%= f.number_field :ann_id %>
+  </div>
+  <div class="field">
+    <%= f.label :selected_text %><br />
+    <%= f.text_field :selected_text %>
+  </div>
+  <div class="field">
+    <%= f.label :translation %><br />
+    <%= f.text_field :translation %>
+  </div>
+  <div class="field">
+    <%= f.label :lang %><br />
+    <%= f.text_field :lang %>
+  </div>
+  <div class="field">
+    <%= f.label :paragraph_idx %><br />
+    <%= f.number_field :paragraph_idx %>
+  </div>
+  <div class="field">
+    <%= f.label :text_idx %><br />
+    <%= f.number_field :text_idx %>
+  </div>
+  <div class="field">
+    <%= f.label :url %><br />
+    <%= f.text_field :url %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

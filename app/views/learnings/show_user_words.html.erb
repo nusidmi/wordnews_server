@@ -1,0 +1,30 @@
+<h1>All the <%= @target_lang %> words that you <%= @mode %></h1>
+
+<table class="table table-striped">
+  <tr>
+    <th>No.</th>
+    <th><%= @target_lang %></th>
+    <th>Pronunciation</th>
+    <th>English</th>
+  </tr>
+
+
+<% @words.each_with_index do |word, index| %>
+  <tr>
+    <td><%=index+1 %></td>
+    <td><a href='<%= word.more_url %>' target='_blank'><%= word.chinese_text %></a></td>
+    <td>
+       <button onClick="play(<%= word.id %>)" style="background-color:transparent; border-color:transparent;"> 
+          <%= image_tag('audio.png', height:"18", alt:"Listen") %>
+        </button>
+        <audio id="<%= word.id %>" )>
+          <% word.audio_urls.each do |url| %>
+            <source src = "<%= url %>"/>
+          <% end %>
+        </audio>
+        <%= word.chinese_pronunciation %>
+    </td>
+    <td><%= word.english_text %></td>
+  </tr>
+<% end %>
+</table>

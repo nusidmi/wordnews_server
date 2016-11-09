@@ -1,0 +1,41 @@
+<h1>Most annotated articles <%= @time_msg %> </h1>
+
+<div class="text-center" style="min-height: 40px">
+  <% if @user_id %>
+      <a href="<%= facebook_most_annotated_share_path(@lang, @num, @from_date, @to_date, @user_id) %>" 
+         class="btn-sm btn-social btn-facebook btn-flat" data-lang="<%= @lang %>" 
+         data-num="<%= @num %>" data-from-date="<%= @from_date %>" 
+         data-to-date="<%= @to_date %>" data-user-id="<%= @user_id %>" id="fb-anno-share">
+        <i class="fa fa-facebook"></i>
+        Share
+      </a>
+  <% else %>
+      <a href="<%= facebook_most_annotated_share_path(@lang, @num, @from_date, @to_date) %>" 
+         class="btn-sm btn-social btn-facebook btn-flat"><i class="fa fa-facebook"></i>
+        Share
+      </a>
+  <% end %>
+  
+</div>
+
+<div>
+  <table class="table table-striped">
+    <tr>
+      <td>No.</td>
+      <th>Article</th>
+      <th>Annotation count</th>
+      <th>Language</th>
+      <th>Publication Date</th>
+    </tr>
+  <% @articles.each_with_index do |article, index| %>
+    <tr>
+      <td><%=index+1 %></td>
+      <td><a href='<%=article.url %>'><%= article.title %></a></td>
+      <td><%= article.annotation_count %></td>
+      <td><%= article.lang %></td>
+      <td><%= article.publication_date %></td>
+    </tr>
+  <% end %>
+  </table>
+</div>
+<br />
