@@ -5,8 +5,8 @@ module Utilities::AnnotationUtil
   # TODO: cache
   def self.save_pronunciation(annotation, lang)
     if lang==Utilities::Lang::CODE[:Chinese]
-      if ChineseVocabularyHandler.get_pronunciation_by_word(annotation).nil? and \
-        ChineseAnnotationVocabularyHandler.get_pronunciation_by_word(annotation).nil?
+      if Utilities::ChineseVocabularyHandler.get_pronunciation_by_word(annotation).nil? and \
+        Utilities::ChineseAnnotationVocabularyHandler.get_pronunciation_by_word(annotation).nil?
         pron = get_pronunciation_from_tool(annotation)
         if !pron.nil?
           voc = ChineseAnnotationVocabulary.new(text: annotation, pronunciation: pron)

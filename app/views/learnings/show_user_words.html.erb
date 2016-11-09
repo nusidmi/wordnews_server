@@ -6,6 +6,7 @@
     <th><%= @target_lang %></th>
     <th>Pronunciation</th>
     <th>English</th>
+    <th>Count</th>
   </tr>
 
 
@@ -25,6 +26,8 @@
         <%= word.chinese_pronunciation %>
     </td>
     <td><%= word.english_text %></td>
+    <td><%= word.view_count %></td>
+
   </tr>
 <% end %>
 </table>
