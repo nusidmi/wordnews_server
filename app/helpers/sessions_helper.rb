@@ -8,6 +8,9 @@ module SessionsHelper
     user.remember
     cookies.permanent[:user_id] = user.public_key
     cookies.permanent[:remember_token] = user.remember_token
+    cookies.permanent[:score] = user.score
+    cookies.permanent[:rank] = user.rank
+
   end
 
   def current_user
@@ -15,7 +18,7 @@ module SessionsHelper
       @current_user ||= User.where(public_key: session[:public_key]).first
     elsif cookies[:user_id]
       user = User.where(public_key: cookies[:user_id]).first
-      if user && user.authenticated?(cookies[:remember_token])
+      if user && user.authenticated?(:remember, cookies[:remember_token])
         log_in user
         @current_user = user
       end
@@ -32,6 +35,8 @@ module SessionsHelper
     user.forget
     cookies.delete(:user_id)
     cookies.delete(:remember_token)
+    cookies.delete(:score)
+    cookies.delete(:rank)
   end
 
   def log_out

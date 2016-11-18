@@ -25,7 +25,7 @@ class LearningsController < ApplicationController
     website = params[:website]
     title = params[:title]
     publication_date = params[:publication_date]
-    quiz_generator = params[:quiz_generator]? params[:quiz_generator].present? : 'lin_distance'
+    quiz_generator = params[:quiz_generator].present? ?  params[:quiz_generator] : 'lin_distance'
     
     user_id = User.where(:public_key => public_key).pluck(:id).first
     if user_id.nil?
@@ -88,12 +88,8 @@ class LearningsController < ApplicationController
       end
       
       # one word per sentence
-      select = false
       sentence.words.each_with_index do |word_text, index|
-        if select
-          break
-        end
-        
+
         word_pos = sentence.tags[index]
         if !word_text.nil? and !word_set.include?(word_text) and Utilities::Text.is_proper_to_learn(word_text, word_pos)
           word_id = Utilities::LearningUtil.get_word_id(word_text, Utilities::Lang::CODE[:English])
@@ -133,17 +129,20 @@ class LearningsController < ApplicationController
                 
                 if !word.quiz.nil? or word.learn_type=='view'                 
                   words_to_learn.push(word)
-                  puts word.text
-                  puts word.translation
+                  # puts word.text
+                  # puts word.translation
                   i += 1
                   word_set.add(word_text)
-                  select = true
                 end
               end
             end
           end
         end
       end
+    end
+
+    while words_to_learn.size > num_of_words
+      words_to_learn.delete_at( rand( words_to_learn.size-1 ) )
     end
     return words_to_learn
   end
@@ -472,18 +471,23 @@ class LearningsController < ApplicationController
     end
 
     # TODO: better support other languages
-    if params[:lang]==Utilities::Lang::CODE[:Chinese]
-      if params[:is_learning]=='1' # words are learning
-        @words = EnglishChineseTranslation.joins(:learning_histories).where('user_id=? AND lang=? AND test_count<?', 
-        @user.id, params[:lang], VIEW_COUNT_MAX)
-        @mode = 'are learning'
-      elsif params[:is_learning]=='0' # words have learned (passed the max number of quiz)
-        @words = EnglishChineseTranslation.joins(:learning_histories).where('user_id=? AND lang=? and test_count=?',  
-        @user.id, params[:lang], QUIZ_COUNT_MAX)
-        @mode = 'have learnt'
+    @words = Hash.new;
+    if params[:is_learning]=='1' # words are learning
+      @mode = 'are learning'
+      if params[:lang]==Utilities::Lang::CODE[:Chinese]
+        @words = EnglishChineseTranslation.joins(:learning_histories).select('english_chinese_translations.*, learning_histories.view_count').where('user_id=? AND lang=? AND test_count<?',
+                            @user.id, params[:lang], VIEW_COUNT_MAX)
       end
+    elsif params[:is_learning]=='0' # words have learned (passed the max number of quiz)
+      @mode = 'have learnt'
+      if params[:lang]==Utilities::Lang::CODE[:Chinese]
+
+        @words = EnglishChineseTranslation.joins(:learning_histories).select('english_chinese_translations.*, learning_histories.view_count').where('user_id=? AND lang=? and test_count=?',
+                  @user.id, params[:lang], QUIZ_COUNT_MAX)
+      end
+
     end
-    
+
     @words.each do |word|
       word.audio_urls = Utilities::LearningUtil.get_audio_urls(word.chinese_pronunciation, params[:lang])
       word.more_url = Utilities::LearningUtil.get_more_url(word.chinese_text, params[:lang])
