@@ -25,7 +25,7 @@ class LearningsController < ApplicationController
     website = params[:website]
     title = params[:title]
     publication_date = params[:publication_date]
-    quiz_generator = params[:quiz_generator]? params[:quiz_generator].present? : 'lin_distance'
+    quiz_generator = params[:quiz_generator].present? ?  params[:quiz_generator] : 'lin_distance'
     
     user_id = User.where(:public_key => public_key).pluck(:id).first
     if user_id.nil?
@@ -129,8 +129,8 @@ class LearningsController < ApplicationController
                 
                 if !word.quiz.nil? or word.learn_type=='view'                 
                   words_to_learn.push(word)
-                  puts word.text
-                  puts word.translation
+                  # puts word.text
+                  # puts word.translation
                   i += 1
                   word_set.add(word_text)
                 end
