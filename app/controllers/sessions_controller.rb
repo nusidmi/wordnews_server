@@ -54,6 +54,7 @@ class SessionsController < ApplicationController
 
   def logout
     log_out if logged_in?
+    flash[:info] = "You have successfully logged out"
     redirect_to :action => "new"
   end
 

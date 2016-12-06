@@ -317,7 +317,7 @@ class LearningsController < ApplicationController
         user.quiz_count += 1
         user.score += Utilities::UserLevel.get_score(:pass_quiz)
         user.rank += Utilities::UserLevel.upgrade_rank(user)
-        if learning_history.test_count+1 == QUIZ_COUNT_MAX
+        if learning_history.test_count == QUIZ_COUNT_MAX
           user.learning_count -= 1
           user.learnt_count += 1
         end
@@ -390,7 +390,7 @@ class LearningsController < ApplicationController
         user.quiz_count += 1
         user.score += Utilities::UserLevel.get_score(:pass_quiz)
         user.rank += Utilities::UserLevel.upgrade_rank(user)
-        if learning_history.test_count+1 == QUIZ_COUNT_MAX
+        if learning_history.test_count == QUIZ_COUNT_MAX
           user.learning_count -= 1
           user.learnt_count += 1
         end
@@ -482,7 +482,7 @@ class LearningsController < ApplicationController
       @mode = 'have learnt'
       if params[:lang]==Utilities::Lang::CODE[:Chinese]
 
-        @words = EnglishChineseTranslation.joins(:learning_histories).select('english_chinese_translations.*, learning_histories.view_count').where('user_id=? AND lang=? and test_count=?',
+        @words = EnglishChineseTranslation.joins(:learning_histories).select('english_chinese_translations.*, learning_histories.view_count').where('user_id=? AND lang=? and test_count>=?',
                   @user.id, params[:lang], QUIZ_COUNT_MAX)
       end
 
