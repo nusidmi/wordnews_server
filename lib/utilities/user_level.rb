@@ -29,8 +29,8 @@ module Utilities::UserLevel
     view_human_annotation: 3,
     vote_translation:      4, 
     input_translation:     5, 
-    annotate_news_sites:   6, 
-    annotate_any_sites:    7,
+    annotate_news_sites:   1,
+    annotate_any_sites:    1,
     sns_share:             1
   }
   

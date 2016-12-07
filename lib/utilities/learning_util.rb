@@ -77,8 +77,8 @@ module Utilities::LearningUtil
       return ['skip', 0]
     elsif learning_history.test_count==0 and learning_history.view_count<VIEW_COUNT_MAX
       return ['view', 0]
-    elsif learning_history.test_count<=QUIZ_FREQUENCY_COUNT_MAX/2
-      return ['test', 1] # English distractors
+    #elsif learning_history.test_count<=QUIZ_FREQUENCY_COUNT_MAX/2
+    #  return ['test', 1] # English distractors
     else
       return ['test', 2] # Chinese distractors
     end
