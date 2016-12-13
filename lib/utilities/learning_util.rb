@@ -150,16 +150,24 @@ module Utilities::LearningUtil
   def self.generate_quiz_chinese(word, word_pos, test_type, news_category='Any')
     params = {'word': word, 'word_pos': word_pos, 'test_type': test_type,
               'news_category':news_category}
+
+    # Log POST params
+    Rails.logger.info params.to_json
     response = HTTParty.post(QUIZ_HOST+'/generate_quiz', 
                         :body=>params.to_json, 
-  	                    :headers => {'Content-Type' => 'application/json'})
-  	                    
+                        :headers => {'Content-Type' => 'application/json'})
+                        
     if response.code!=200 or response.body=='' or response.body=='Invalid Parameters'
       Rails.logger.warn "MCQ Generator: Error"
       return []
     end
     
+    # Log Response body
+    Rails.logger.info response.body
     results = JSON.parse(response.body)
+    
+    # Log Parsed Response body
+    Rails.logger.info results
     
     quiz= Hash.new
     quiz['test_type'] = test_type  # 0: no type, 1: choice in english, 2: choice in chinese
