@@ -153,10 +153,11 @@ module Utilities::LearningUtil
 
     # Log POST params
     Rails.logger.info params.to_json
+
     response = HTTParty.post(QUIZ_HOST+'/generate_quiz', 
                         :body=>params.to_json, 
                         :headers => {'Content-Type' => 'application/json'})
-                        
+         
     if response.code!=200 or response.body=='' or response.body=='Invalid Parameters'
       Rails.logger.warn "MCQ Generator: Error"
       return []
@@ -164,6 +165,7 @@ module Utilities::LearningUtil
     
     # Log Response body
     Rails.logger.info response.body
+    
     results = JSON.parse(response.body)
     
     # Log Parsed Response body
