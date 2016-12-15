@@ -141,9 +141,9 @@ class LearningsController < ApplicationController
       end
     end
 
-    while words_to_learn.size > num_of_words
-      words_to_learn.delete_at( rand( words_to_learn.size-1 ) )
-    end
+    # while words_to_learn.size > num_of_words
+    #  words_to_learn.delete_at( rand( words_to_learn.size-1 ) )
+    # end
     return words_to_learn
   end
   
