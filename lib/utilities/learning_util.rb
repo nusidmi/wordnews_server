@@ -147,9 +147,14 @@ module Utilities::LearningUtil
   
   # knowledge_level: 1(random English alogrithm), 2(English distractors by hard algorithm), 3 (Chinese distractors by hard algorithm)
   # news_category: Entertainment, World, Finance, Sports, Technology, Travel, or Any
-  def self.generate_quiz_chinese(word, word_pos, test_type, news_category='Any')
-    params = {'word': word, 'word_pos': word_pos, 'test_type': test_type,
-              'news_category':news_category}
+  def self.generate_quiz_chinese(word, word_pos, test_type, news_category='Any', word_translation)
+    params = {
+      'word': word, 
+      'word_pos': word_pos, 
+      'test_type': test_type,
+      'news_category': news_category, 
+      'word_translation': word_translation
+    }
 
     # Log POST params
     Rails.logger.info params.to_json
@@ -165,7 +170,7 @@ module Utilities::LearningUtil
     
     # Log Response body
     Rails.logger.info response.body
-    
+
     results = JSON.parse(response.body)
     
     # Log Parsed Response body

@@ -124,7 +124,7 @@ class LearningsController < ApplicationController
               if word.learn_type!='skip' and !word.pair_id.nil?
                 if word.learn_type=='test'
                   article_category = Utilities::LearningUtil.get_article_category(url)
-                  word.quiz = generate_quiz(quiz_generator, word.text, word.pos_tag, lang, word.test_type, article_category)
+                  word.quiz = generate_quiz(quiz_generator, word.text, word.pos_tag, lang, word.test_type, article_category, word.translation)
                 end
                 
                 if !word.quiz.nil? or word.learn_type=='view'                 
@@ -196,10 +196,10 @@ class LearningsController < ApplicationController
     end
   end
   
-  def generate_quiz(algorithm, word, word_pos, lang, test_type, article_category)
+  def generate_quiz(algorithm, word, word_pos, lang, test_type, article_category, word_translation)
     if lang==Utilities::Lang::CODE[:Chinese]
       if algorithm=='lin_distance'
-        return Utilities::LearningUtil.generate_quiz_chinese(word, word_pos, test_type, article_category)
+        return Utilities::LearningUtil.generate_quiz_chinese(word, word_pos, test_type, article_category, word_translation)
       elsif algorithm=='recent'
         return Utilities::LearningUtil.generate_recent_quiz_chinese(user_id, test_type)
       end
