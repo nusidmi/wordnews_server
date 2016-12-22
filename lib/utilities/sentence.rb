@@ -1,17 +1,19 @@
 class Utilities::Sentence
 #class Sentence
 
-    def initialize (text, word_tag_str, paragraph_index, sentence_index)
+    def initialize (text, word_tag_str, paragraph_index, sentence_index, sentence_pos)
         @text = text
         @paragraph_index = paragraph_index
         @sentence_index = sentence_index
+        @sentence_pos = sentence_pos
         parse(word_tag_str)
     end
     
-    def initialize(text, words_str, tags_str, paragraph_index, sentence_index)
+    def initialize(text, words_str, tags_str, paragraph_index, sentence_index, sentence_pos)
         @text = text
         @paragraph_index = paragraph_index
         @sentence_index = sentence_index
+        @sentence_pos = sentence_pos
         parse(words_str, tags_str)
         
     end
@@ -78,10 +80,10 @@ class Utilities::Sentence
             offset += 1
         end
         if start>=0
-            return [start, start+word.length-1]
+            return [start, start+word.length-1, start+sentence_pos, start+word.length-1+sentence_pos]
         end
     end
     
     
-    attr_reader :text, :words, :tags, :paragraph_index, :sentence_index
+    attr_reader :text, :words, :tags, :paragraph_index, :sentence_index, :sentence_pos
 end
