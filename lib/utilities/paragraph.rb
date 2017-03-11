@@ -64,9 +64,16 @@ class Utilities::Paragraph
     end
     
     results = JSON.parse(nlp_reply)
+    prev_pos = 0
+    pos = 0
     results.each_with_index do |result, result_index|
-      s = Utilities::Sentence.new(result["sent"], result["words"], result["tags"], @index, result_index)
-      @sentences.push(s)
+      pos = @text.index(result["sent"], prev_pos)
+      if !pos.nil? && pos >= prev_pos
+        s = Utilities::Sentence.new(result["sent"], result["words"], result["tags"], @index, result_index, pos)
+        @sentences.push(s)
+        prev_pos = pos+result["sent"].length
+      end
+
     end
 
     return @sentences
